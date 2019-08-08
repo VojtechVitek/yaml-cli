@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/VojtechVitek/transform"
+	"github.com/VojtechVitek/yaml"
 	"github.com/pkg/errors"
 )
 
@@ -22,17 +22,18 @@ func runCLI() error {
 
 	switch os.Args[1] {
 	case "delete":
-		delete := os.Args[2]
+		selector := os.Args[2]
 
-		input, err := ioutil.ReadAll(os.Stdin)
+		in, err := ioutil.ReadAll(os.Stdin)
 		if err != nil {
 			return errors.Wrap(err, "failed to read stdin")
 		}
 
-		transformer := &transform.Transformer{}
-		buf, err := transformer.Delete(input, delete)
+		buf, err := yaml.Delete(in, selector)
 		if err != nil {
-			return errors.Wrapf(err, "failed to delete %q", delete)
+			if false { // TODO: --strict mode, where we'd error out on non-existent selectors?
+				return errors.Wrapf(err, "failed to delete %q", selector)
+			}
 		}
 
 		_, err = os.Stdout.Write(buf)
