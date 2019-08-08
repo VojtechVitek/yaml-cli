@@ -49,11 +49,16 @@ func runCLI() error {
 		}
 
 		for _, tf := range transformations {
-			ok, err := tf.MustMatchAll(&doc, tf.Matches)
-			if ok {
-				log.Printf("WE HAVE A MATCH")
+			ok, _ := tf.MustMatchAll(&doc, tf.Matches)
+			if !ok {
+				continue
 			}
-			log.Println(err)
+
+			for selector, node := range tf.Sets {
+				if err := yaml.Set(&doc, selector, &node); err != nil {
+					return errors.Wrapf(err, "failed to set %q=%q", selector, node)
+				}
+			}
 		}
 
 	case "delete":
