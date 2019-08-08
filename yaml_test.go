@@ -39,53 +39,50 @@ func TestDelete(t *testing.T) {
 
 /*
 match:
-    kind: Deployment
-    metadata.name: api
+        kind: Deployment
+        metadata.name: api
 
 add:
-    spec.replicas: 3
+        spec.replicas: 3
 
 match:
-    kind: Deployment
-    metadata.name: service
+        kind: Deployment
+        metadata.name: service
 set:
-    spec.replicas: 3
+        spec.replicas: 3
 
 	match:
-    kind: Deployment
+        kind: Deployment
 delete: spec.replicas
 */
 
-var deployment = []byte(`
-apiVersion: apps/v1
+var deployment = []byte(`apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: api
-  labels:
-    app: api
-    other: label
+    name: api
+    labels:
+        app: api
+        other: label
 spec:
-  replicas: 3
+    replicas: 3
 `)
 
-var deploymentWithoutKind = []byte(`
-apiVersion: apps/v1
+var deploymentWithoutKind = []byte(`apiVersion: apps/v1
 metadata:
-  name: api
-  labels:
-    app: api
-    other: label
+    name: api
+    labels:
+        app: api
+        other: label
 spec:
-  replicas: 3
+    replicas: 3
 `)
 
-var deploymentWithoutMetadataLabelsApp = []byte(`
-apiVersion: apps/v1
+var deploymentWithoutMetadataLabelsApp = []byte(`apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: api
-  labels:
-    other: label
+    name: api
+    labels:
+        other: label
 spec:
-  replicas: 3
+    replicas: 3
 `)
