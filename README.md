@@ -1,7 +1,55 @@
-# yaml transformations
+# yaml transformer
 A CLI tool for transforming YAML files (add, edit, delete YAML nodes based on selector)
 
+```
+[input YAML] => [apply given transformations] => [output YAML]
+```
+
+The input might contain multiple YAML documents separated by `---`.
+
 ## Work in progress.. not stable yet
+
+## Example:
+
+deployment.yml:
+```yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: api
+    labels:
+        first: label
+        second: label
+spec:
+    replicas: 1
+```
+
+staging.yml:
+```yml
+match:
+    kind: Deployment
+    metadata.name: api
+set:
+    metadata.labels.environment: staging
+    metadata.labels.first: updated-label
+    spec.replicas: 3
+```
+
+```bash
+cat deployment.yml | yaml apply staging.yml
+```
+```yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: api
+    labels:
+        environment: staging
+        first: updated-label
+        second: label
+spec:
+    replicas: 3
+```
 
 ## Goals
 I was frustrated by the K8s Kustomize tool and its useless error messages.
@@ -12,9 +60,7 @@ I'm seeking a simple tool to transform YAML files, ie. match some Kubernetes obj
 $ cat deployment.yml | yaml apply staging/transform.yml [...] > _desired/staging-deployment.yml`
 ```
 
-## Ideas for syntax
-
-### Syntax for advanced transformations
+## Examples of transformation YAML files:
 ```yml
 match:
     kind: Deployment
@@ -58,4 +104,4 @@ set:
     spec.template.spec.containers[0].image: nats-streaming:0.15.1
 ```
 
-## Feedback welcome! Please open issues and feature requests..
+Any feedback welcome! Please open issues and feature requests..

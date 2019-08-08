@@ -15,8 +15,17 @@ func Set(doc *yaml.Node, path string, value *yaml.Node) error {
 		return errors.Wrapf(err, "failed to match %q", path)
 	}
 
-	// Overwrite the node value.
-	*node = *value
+	switch node.Kind {
+	//case yaml.SequenceNode:
+	case yaml.MappingNode:
+		node.Content = append(node.Content, node)
+	case yaml.ScalarNode:
+		// Overwrite the node value.
+		*node = *value
+	//case yaml.AliasNode:
+	default:
+		return errors.Errorf("unknown node.Kind %v", node.Kind)
+	}
 
 	return nil
 }

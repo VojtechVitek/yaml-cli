@@ -6,9 +6,9 @@ import (
 )
 
 type Transformation struct {
-	Matches map[string]string `yaml:"match"`
-	Sets    map[string]string `yaml:"set"`
-	Deletes []string          `yaml:"delete"`
+	Matches map[string]string    `yaml:"match"`
+	Sets    map[string]yaml.Node `yaml:"set"`
+	Deletes []string             `yaml:"delete"`
 }
 
 func NewTransformation(b []byte) (*Transformation, error) {
