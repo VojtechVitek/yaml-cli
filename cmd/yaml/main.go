@@ -20,6 +20,17 @@ func runCLI() error {
 		return errors.New("usage: yaml apply [files..]")
 	}
 
+	in, err := ioutil.ReadAll(os.Stdin)
+	if err != nil {
+		return errors.Wrap(err, "failed to read stdin")
+	}
+
+	var doc yaml.Node
+	err = yaml.Unmarshal(in, &doc) // rename to yaml.Input()
+	if err != nil {
+		return errors.Wrap(err, "failed to unmarshal input")
+	}
+
 	switch os.Args[1] {
 	case "apply":
 		filenames := os.Args[2:]
@@ -37,49 +48,36 @@ func runCLI() error {
 			}
 		}
 
-		in, err := ioutil.ReadAll(os.Stdin)
-		if err != nil {
-			return errors.Wrap(err, "failed to read stdin")
-		}
-
-		var doc yaml.Node
-		err = yaml.Unmarshal(in, &doc) // rename to yaml.Input()
-		if err != nil {
-			return errors.Wrap(err, "failed to unmarshal input")
-		}
-
 		for _, tf := range transformations {
-			ok, err := tf.MatchesAll(&doc, tf.Matches)
+			ok, err := tf.MustMatchAll(&doc, tf.Matches)
 			if ok {
 				log.Printf("WE HAVE A MATCH")
 			}
 			log.Println(err)
 		}
 
-		return nil
-
 	case "delete":
 		selector := os.Args[2]
 
-		in, err := ioutil.ReadAll(os.Stdin)
-		if err != nil {
-			return errors.Wrap(err, "failed to read stdin")
-		}
-
-		buf, err := yaml.Delete(in, selector)
-		if err != nil {
+		if err := yaml.Delete(&doc, selector); err != nil {
 			if false { // TODO: --strict mode, where we'd error out on non-existent selectors?
 				return errors.Wrapf(err, "failed to delete %q", selector)
 			}
 		}
 
-		_, err = os.Stdout.Write(buf)
-		if err != nil {
-			return errors.Wrap(err, "failed to write to stdout")
-		}
-		return nil
-
 	default:
 		return errors.Errorf("%v: unknown command")
 	}
+
+	output, err := yaml.Marshal(&doc)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal doc")
+	}
+
+	_, err = os.Stdout.Write(output)
+	if err != nil {
+		return errors.Wrap(err, "failed to write to stdout")
+	}
+
+	return nil
 }

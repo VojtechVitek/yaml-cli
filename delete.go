@@ -7,26 +7,15 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func Delete(input []byte, path string) ([]byte, error) {
-	var doc yaml.Node
-	err := yaml.Unmarshal(input, &doc)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal input")
-	}
-
-	// if len(doc.Content) != 1 {
-	// 	// Looks like any YAML doc has always 1 node..
-	// 	return nil, errors.Errorf("len(doc.Content)=%v", len(doc.Content))
-	// }
-
+func Delete(doc *yaml.Node, path string) error {
 	selectors := strings.Split(path, ".")
 
-	err = deleteMatchingNode(doc.Content[0], selectors)
+	err := deleteMatchingNode(doc.Content[0], selectors)
 	if err != nil {
-		return input, errors.Wrapf(err, "failed to match %q", path)
+		return errors.Wrapf(err, "failed to match %q", path)
 	}
 
-	return yaml.Marshal(&doc)
+	return nil
 }
 
 func deleteMatchingNode(node *yaml.Node, selectors []string) error {
