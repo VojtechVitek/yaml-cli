@@ -37,25 +37,6 @@ func TestDelete(t *testing.T) {
 	}
 }
 
-/*
-match:
-        kind: Deployment
-        metadata.name: api
-
-add:
-        spec.replicas: 3
-
-match:
-        kind: Deployment
-        metadata.name: service
-set:
-        spec.replicas: 3
-
-	match:
-        kind: Deployment
-delete: spec.replicas
-*/
-
 var deployment = []byte(`apiVersion: apps/v1
 kind: Deployment
 metadata:
