@@ -15,17 +15,7 @@ func Set(doc *yaml.Node, path string, value *yaml.Node) error {
 		return errors.Wrapf(err, "failed to match %q", path)
 	}
 
-	switch node.Kind {
-	//case yaml.SequenceNode:
-	case yaml.MappingNode:
-		node.Content = append(node.Content, node)
-	case yaml.ScalarNode:
-		// Overwrite the node value.
-		*node = *value
-	//case yaml.AliasNode:
-	default:
-		return errors.Errorf("unknown node.Kind %v", node.Kind)
-	}
+	*node = *value
 
 	return nil
 }
@@ -48,7 +38,22 @@ func findOrCreateMatchingNode(node *yaml.Node, selectors []string) (*yaml.Node, 
 		}
 	}
 
-	// Create the rest of the nodes
+	// Create the rest of the selector path.
+	for _, selector := range selectors {
+		node.Content = append(node.Content,
+			&yaml.Node{
+				Kind:  yaml.ScalarNode,
+				Tag:   "!!str",
+				Value: selector,
+			},
+			&yaml.Node{
+				Kind: yaml.MappingNode,
+				Tag:  "!!map",
+			},
+		)
+
+		node = node.Content[len(node.Content)-1]
+	}
 
 	return node, nil
 }
