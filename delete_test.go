@@ -1,6 +1,7 @@
 package yaml_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/VojtechVitek/yaml"
@@ -23,15 +24,24 @@ func TestDelete(t *testing.T) {
 			delete: "metadata.labels.app",
 			out:    deploymentWithoutMetadataLabelsApp,
 		},
+		{
+			in:     []byte(fmt.Sprintf("a:\n  b:\n    c:\n      d: value\nkey: value\n")),
+			delete: "a",
+			out:    []byte("key: value\n"),
+		},
 	}
 
 	for i, tc := range tt {
-		got, err := yaml.Delete(tc.in, tc.delete)
+		doc, err := yaml.Parse(tc.in)
 		if err != nil {
 			t.Error(err)
 		}
 
-		if diff := cmp.Diff(tc.out, got); diff != "" {
+		if err := yaml.Delete(doc, tc.delete); err != nil {
+			t.Error(err)
+		}
+
+		if diff := cmp.Diff(tc.out, yaml.Bytes(doc)); diff != "" {
 			t.Errorf("tc[%v] mismatch (-want +got):\n%s", i, diff)
 		}
 	}

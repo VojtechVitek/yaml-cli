@@ -25,8 +25,7 @@ func runCLI() error {
 		return errors.Wrap(err, "failed to read stdin")
 	}
 
-	var doc yaml.Node
-	err = yaml.Unmarshal(in, &doc) // rename to yaml.Input()
+	doc, err := yaml.Parse(in)
 	if err != nil {
 		return errors.Wrap(err, "failed to unmarshal input")
 	}
@@ -49,13 +48,13 @@ func runCLI() error {
 		}
 
 		for _, tf := range transformations {
-			ok, _ := tf.MustMatchAll(&doc, tf.Matches)
+			ok, _ := tf.MustMatchAll(doc, tf.Matches)
 			if !ok {
 				continue
 			}
 
 			for selector, node := range tf.Sets {
-				if err := yaml.Set(&doc, selector, &node); err != nil {
+				if err := yaml.Set(doc, selector, &node); err != nil {
 					return errors.Wrapf(err, "failed to set %q=%q", selector, node)
 				}
 			}
@@ -64,7 +63,7 @@ func runCLI() error {
 	case "delete":
 		selector := os.Args[2]
 
-		if err := yaml.Delete(&doc, selector); err != nil {
+		if err := yaml.Delete(doc, selector); err != nil {
 			if false { // TODO: --strict mode, where we'd error out on non-existent selectors?
 				return errors.Wrapf(err, "failed to delete %q", selector)
 			}
@@ -74,12 +73,7 @@ func runCLI() error {
 		return errors.Errorf("%v: unknown command")
 	}
 
-	output, err := yaml.Marshal(&doc)
-	if err != nil {
-		return errors.Wrap(err, "failed to marshal doc")
-	}
-
-	_, err = os.Stdout.Write(output)
+	_, err = os.Stdout.Write(yaml.Bytes(doc))
 	if err != nil {
 		return errors.Wrap(err, "failed to write to stdout")
 	}

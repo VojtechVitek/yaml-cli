@@ -22,9 +22,17 @@ func NewTransformation(b []byte) (*Transformation, error) {
 	return &t, nil
 }
 
-// TODO: Provide helper func to parse input doc instead of
-// duplicating upstream types/methods.
 type Node = yaml.Node
 
-func Marshal(in interface{}) ([]byte, error)     { return yaml.Marshal(in) }
-func Unmarshal(in []byte, out interface{}) error { return yaml.Unmarshal(in, out) }
+func Parse(in []byte) (*Node, error) {
+	var doc Node
+	if err := yaml.Unmarshal(in, &doc); err != nil {
+		return nil, errors.Wrap(err, "failed to parse YAML")
+	}
+	return &doc, nil
+}
+
+func Bytes(in *Node) []byte {
+	b, _ := yaml.Marshal(in)
+	return b
+}
