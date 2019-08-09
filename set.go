@@ -25,17 +25,26 @@ func findOrCreateMatchingNode(node *yaml.Node, selectors []string) (*yaml.Node, 
 	lastSelector := len(selectors) == 1
 
 	// Iterate over the keys (the slice is key/value pairs).
-	for i := 0; i < len(node.Content); i += 2 {
-		// Does current key match the selector?
-		if node.Content[i].Value == currentSelector {
-			if !lastSelector {
-				// Try to match the rest of the selector path in the value.
-				return findOrCreateMatchingNode(node.Content[i+1], selectors[1:])
-			}
+	switch node.Kind {
+	case yaml.MappingNode:
+		for i := 0; i < len(node.Content); i += 2 {
+			// Does current key match the selector?
+			if node.Content[i].Value == currentSelector {
+				if !lastSelector {
+					// Match the rest of the selector path, ie. go deeper
+					// in to the value node.
+					return findOrCreateMatchingNode(node.Content[i+1], selectors[1:])
+				}
 
-			// Found last key, return its value.
-			return node.Content[i+1], nil
+				// Found last key, return its value.
+				return node.Content[i+1], nil
+			}
 		}
+	case yaml.ScalarNode:
+		// Override existing nodes.
+		node.Kind = yaml.MappingNode
+		node.Tag = "!!map"
+		node.Value = ""
 	}
 
 	// Create the rest of the selector path.
