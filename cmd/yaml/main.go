@@ -7,6 +7,7 @@ import (
 
 	"github.com/VojtechVitek/yaml"
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 )
 
 func main() {
@@ -35,16 +36,25 @@ func runCLI() error {
 		filenames := os.Args[2:]
 		transformations := make([]*yaml.Transformation, len(filenames))
 
+		var g errgroup.Group
 		for i, filename := range filenames {
-			b, err := ioutil.ReadFile(filename)
-			if err != nil {
-				return errors.Wrapf(err, "failed to read transformation %v", filename)
-			}
+			i, filename := i, filename
+			g.Go(func() error {
+				b, err := ioutil.ReadFile(filename)
+				if err != nil {
+					return errors.Wrapf(err, "failed to read transformation %v", filename)
+				}
 
-			transformations[i], err = yaml.NewTransformation(b)
-			if err != nil {
-				return errors.Wrapf(err, "failed to parse transformation %v", filename)
-			}
+				transformations[i], err = yaml.ParseTransformation(b)
+				if err != nil {
+					return errors.Wrapf(err, "failed to parse transformation %v", filename)
+				}
+
+				return nil
+			})
+		}
+		if err := g.Wait(); err != nil {
+			return err
 		}
 
 		for i, tf := range transformations {

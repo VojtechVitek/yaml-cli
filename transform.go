@@ -5,14 +5,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// TODO: Unexport this? Why would anyone need to consume the values directly?
 type Transformation struct {
 	Matches map[string]string `yaml:"match"`
 	Sets    yaml.Node         `yaml:"set"`
 	Deletes []string          `yaml:"delete"`
 }
 
-func NewTransformation(b []byte) (*Transformation, error) {
+func ParseTransformation(b []byte) (*Transformation, error) {
 	var t Transformation
 	if err := yaml.Unmarshal(b, &t); err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal transformation")
