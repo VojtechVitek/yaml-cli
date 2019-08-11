@@ -10,17 +10,29 @@ import (
 func Set(doc *yaml.Node, path string, value *yaml.Node) error {
 	selectors := strings.Split(path, ".")
 
-	node, err := findOrCreateMatchingNode(doc.Content[0], selectors)
+	node, err := findOrCreateNode(doc.Content[0], selectors)
 	if err != nil {
 		return errors.Wrapf(err, "failed to match %q", path)
 	}
 
-	*node = *value
+	if node.Kind == yaml.MappingNode && value.Kind == yaml.MappingNode {
+		// Append new values onto an existing map node.
+		node.Content = append(node.Content, value.Content...)
+	} else if node.Kind == yaml.MappingNode && node.Content == nil {
+		// Overwrite a new map node we created in findOrCreateNode(), as confirmed
+		// by the nil check (the node.Content wouldn't be nil otherwise).
+		*node = *value
+	} else if node.Kind == yaml.ScalarNode && value.Kind == yaml.ScalarNode {
+		// Overwrite an existing scalar value with a new value.
+		*node = *value
+	} else {
+		return errors.Errorf("can't overwrite value of kind %v at %q with value of kind %v", node.Kind, path, value.Kind)
+	}
 
 	return nil
 }
 
-func findOrCreateMatchingNode(node *yaml.Node, selectors []string) (*yaml.Node, error) {
+func findOrCreateNode(node *yaml.Node, selectors []string) (*yaml.Node, error) {
 	currentSelector := selectors[0]
 	lastSelector := len(selectors) == 1
 
@@ -33,7 +45,7 @@ func findOrCreateMatchingNode(node *yaml.Node, selectors []string) (*yaml.Node, 
 				if !lastSelector {
 					// Match the rest of the selector path, ie. go deeper
 					// in to the value node.
-					return findOrCreateMatchingNode(node.Content[i+1], selectors[1:])
+					return findOrCreateNode(node.Content[i+1], selectors[1:])
 				}
 
 				// Found last key, return its value.
@@ -41,10 +53,12 @@ func findOrCreateMatchingNode(node *yaml.Node, selectors []string) (*yaml.Node, 
 			}
 		}
 	case yaml.ScalarNode:
-		// Override existing nodes.
+		// Overwrite any existing nodes.
 		node.Kind = yaml.MappingNode
 		node.Tag = "!!map"
 		node.Value = ""
+	default:
+		return nil, errors.Errorf("unknown node.Kind %v", node.Kind)
 	}
 
 	// Create the rest of the selector path.
