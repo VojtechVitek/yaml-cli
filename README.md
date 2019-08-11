@@ -29,17 +29,6 @@ $ cat k8s-desired-state.yml | yaml match "kind: Deployment" "metadata.name: redi
 $ cat deployment.yml | yaml apply staging.yml > desired-state.yml
 ```
 
-staging.yml:
-```yml
-match:
-    kind: Deployment
-    metadata.name: api
-set:
-    metadata.labels.environment: staging
-    metadata.labels.first: updated-label
-    spec.replicas: 3
-```
-
 deployment.yml:
 ```yml
 apiVersion: apps/v1
@@ -53,18 +42,29 @@ spec:
     replicas: 1
 ```
 
-desired-state:
+staging.yml:
 ```yml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-    name: api
-    labels:
-        environment: staging
-        first: updated-label
-        second: label
-spec:
-    replicas: 3
+match:
+    kind: Deployment
+    metadata.name: api
+set:
+    metadata.labels.first: updated-label
+    metadata.labels.environment: staging
+    spec.replicas: 3
+```
+
+desired-state:
+```diff
+ metadata:
+     name: api
+     labels:
+-        first: label
++        first: updated-label
+         second: label
++        environment: staging
+ spec:
+-    replicas: 1
++    replicas: 3
 ```
 
 ## Goals
