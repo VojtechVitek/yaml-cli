@@ -26,7 +26,7 @@ func Set(doc *yaml.Node, path string, value *yaml.Node) error {
 		// Overwrite an existing scalar value with a new value.
 		*node = *value
 	} else {
-		return errors.Errorf("can't overwrite value of kind %v at %q with value of kind %v", node.Kind, path, value.Kind)
+		return errors.Errorf("can't overwrite %v value with %v value", node.Tag, value.Tag)
 	}
 
 	return nil

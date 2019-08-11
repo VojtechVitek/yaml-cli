@@ -55,7 +55,7 @@ func runCLI() error {
 
 			for selector, node := range tf.Sets {
 				if err := yaml.Set(doc, selector, &node); err != nil {
-					return errors.Wrapf(err, "failed to set %q=%q", selector, node)
+					return errors.Wrapf(err, "failed to set %q", selector)
 				}
 			}
 		}
