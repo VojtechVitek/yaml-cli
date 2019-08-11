@@ -47,16 +47,14 @@ func runCLI() error {
 			}
 		}
 
-		for _, tf := range transformations {
-			ok, _ := tf.MustMatchAll(doc, tf.Matches)
+		for i, tf := range transformations {
+			ok, _ := tf.MustMatchAll(doc)
 			if !ok {
 				continue
 			}
 
-			for selector, node := range tf.Sets {
-				if err := yaml.Set(doc, selector, &node); err != nil {
-					return errors.Wrapf(err, "failed to set %q", selector)
-				}
+			if err := tf.Apply(doc); err != nil {
+				return errors.Wrapf(err, "failed to apply transformation %v", filenames[i])
 			}
 		}
 

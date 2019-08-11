@@ -7,8 +7,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func (t *Transformation) MustMatchAll(doc *yaml.Node, conds map[string]string) (bool, error) {
-	for path, value := range conds {
+func (t *Transformation) MustMatchAll(doc *yaml.Node) (bool, error) {
+	for path, value := range t.Matches {
 		selectors := strings.Split(path, ".")
 
 		match, err := findMatchingNode(doc.Content[0], selectors)
