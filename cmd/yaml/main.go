@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -70,18 +69,18 @@ func runCLI() error {
 		switch os.Args[1] {
 		case "apply":
 			filenames := os.Args[2:]
-			transformations := make([]*yaml.Transformation, len(filenames))
+			tfs := make([][]*yaml.Transformation, len(filenames))
 
 			var g errgroup.Group
 			for i, filename := range filenames {
 				i, filename := i, filename
 				g.Go(func() error {
-					b, err := ioutil.ReadFile(filename)
+					f, err := os.Open(filename)
 					if err != nil {
 						return errors.Wrapf(err, "failed to read transformation %v", filename)
 					}
 
-					transformations[i], err = yaml.ParseTransformation(b)
+					tfs[i], err = yaml.Transformations(f)
 					if err != nil {
 						return errors.Wrapf(err, "failed to parse transformation %v", filename)
 					}
@@ -93,14 +92,16 @@ func runCLI() error {
 				return err
 			}
 
-			for i, tf := range transformations {
-				ok, _ := tf.MustMatchAll(&doc)
-				if !ok {
-					continue
-				}
+			for i, filename := range filenames {
+				for _, tf := range tfs[i] {
+					ok, _ := tf.MustMatchAll(&doc)
+					if !ok {
+						continue
+					}
 
-				if err := tf.Apply(&doc); err != nil {
-					return errors.Wrapf(err, "failed to apply transformation %v", filenames[i])
+					if err := tf.Apply(&doc); err != nil {
+						return errors.Wrapf(err, "failed to apply %v. transformation from %v", i+1, filename)
+					}
 				}
 			}
 
@@ -114,10 +115,11 @@ func runCLI() error {
 				selectors = selectors[1:]
 			}
 
-			tf, err := yaml.ParseTransformation([]byte(fmt.Sprintf("match:\n  %v", strings.Join(selectors, "\n  "))))
+			tfs, err := yaml.Transformations(strings.NewReader(fmt.Sprintf("match:\n  %v", strings.Join(selectors, "\n  "))))
 			if err != nil {
 				return errors.Wrapf(err, "failed to parse grep `key: value' pairs from %q", selectors)
 			}
+			tf := tfs[0]
 
 			ok, _ := tf.MustMatchAll(&doc)
 			if ok == invert {

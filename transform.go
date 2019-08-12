@@ -1,6 +1,8 @@
 package yaml
 
 import (
+	"io"
+
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 )
@@ -11,13 +13,23 @@ type Transformation struct {
 	Deletes []string          `yaml:"delete"`
 }
 
-func ParseTransformation(b []byte) (*Transformation, error) {
-	var t Transformation
-	if err := yaml.Unmarshal(b, &t); err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal transformation")
+func Transformations(r io.Reader) ([]*Transformation, error) {
+	var transformations []*Transformation
+
+	dec := yaml.NewDecoder(r)
+	for { // For all YAML documents (they might be separated by '---')
+		var t Transformation
+		if err := dec.Decode(&t); err != nil {
+			if err == io.EOF { // Last document.
+				break
+			}
+			return nil, errors.Wrapf(err, "failed to decode YAML")
+		}
+
+		transformations = append(transformations, &t)
 	}
 
-	return &t, nil
+	return transformations, nil
 }
 
 func (t *Transformation) Apply(doc *yaml.Node) error {

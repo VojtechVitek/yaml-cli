@@ -2,6 +2,7 @@ package yaml_test
 
 import (
 	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/VojtechVitek/yaml"
@@ -11,12 +12,12 @@ import (
 func TestApply(t *testing.T) {
 	tt := []struct {
 		in    []byte
-		apply []byte
+		apply *os.File
 		out   []byte
 	}{
 		{
 			in:    readFile("apply/in.yml"),
-			apply: readFile("apply/apply.yml"),
+			apply: openFile("apply/apply.yml"),
 			out:   readFile("apply/out.yml"),
 		},
 	}
@@ -27,13 +28,15 @@ func TestApply(t *testing.T) {
 			t.Error(err)
 		}
 
-		transformation, err := yaml.ParseTransformation(tc.apply)
+		transformations, err := yaml.Transformations(tc.apply)
 		if err != nil {
 			t.Error(err)
 		}
 
-		if err := transformation.Apply(doc); err != nil {
-			t.Error(err)
+		for _, tf := range transformations {
+			if err := tf.Apply(doc); err != nil {
+				t.Error(err)
+			}
 		}
 
 		if diff := cmp.Diff(tc.out, yaml.Bytes(doc)); diff != "" {
@@ -48,4 +51,12 @@ func readFile(filename string) []byte {
 		panic(err)
 	}
 	return b
+}
+
+func openFile(filename string) *os.File {
+	f, err := os.Open(filename)
+	if err != nil {
+		panic(err)
+	}
+	return f
 }
