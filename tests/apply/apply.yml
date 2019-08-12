@@ -1,0 +1,6 @@
+match:
+  kind: Deployment
+set:
+  metadata.namespace: staging
+  spec.template.spec.nodeSelector:
+    worker-role: generic

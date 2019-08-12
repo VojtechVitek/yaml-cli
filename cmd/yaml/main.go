@@ -78,10 +78,10 @@ func runCLI() error {
 		}
 
 	default:
-		return errors.Errorf("%v: unknown command")
+		return errors.Errorf("%v: unknown command", os.Args[1])
 	}
 
-	_, err = os.Stdout.Write(yaml.Bytes(doc))
+	err = yaml.Write(os.Stdout, doc)
 	if err != nil {
 		return errors.Wrap(err, "failed to write to stdout")
 	}

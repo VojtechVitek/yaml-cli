@@ -25,7 +25,7 @@ func TestDelete(t *testing.T) {
 			out:    deploymentWithoutMetadataLabelsApp,
 		},
 		{
-			in:     []byte(fmt.Sprintf("a:\n  b:\n    c:\n      d: value\nkey: value\n")),
+			in:     []byte(fmt.Sprintf("a:\n  b:\n  c:\n    d: value\nkey: value\n")),
 			delete: "a",
 			out:    []byte("key: value\n"),
 		},
@@ -50,30 +50,30 @@ func TestDelete(t *testing.T) {
 var deployment = []byte(`apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: api
-    labels:
-        app: api
-        other: label
+  name: api
+  labels:
+    app: api
+    other: label
 spec:
-    replicas: 3
+  replicas: 3
 `)
 
 var deploymentWithoutKind = []byte(`apiVersion: apps/v1
 metadata:
-    name: api
-    labels:
-        app: api
-        other: label
+  name: api
+  labels:
+    app: api
+    other: label
 spec:
-    replicas: 3
+  replicas: 3
 `)
 
 var deploymentWithoutMetadataLabelsApp = []byte(`apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: api
-    labels:
-        other: label
+  name: api
+  labels:
+    other: label
 spec:
-    replicas: 3
+  replicas: 3
 `)
