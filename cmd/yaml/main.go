@@ -25,11 +25,40 @@ func runCLI() error {
 		return errors.New("usage: yaml apply [files..]")
 	}
 
-	dec := yamlv3.NewDecoder(os.Stdin)
 	enc := yamlv3.NewEncoder(os.Stdout)
 	enc.SetIndent(2)
 
-	for { // For all YAML documents (they might be separated by '---')
+	if os.Args[1] == "cat" {
+		for _, filename := range os.Args[2:] {
+			f, err := os.Open(filename)
+			if err != nil {
+				return errors.Wrap(err, "failed to open file")
+			}
+
+			dec := yamlv3.NewDecoder(f)
+			for { // For all YAML documents in the file (they might be separated by '---')
+				var doc yamlv3.Node
+				if err := dec.Decode(&doc); err != nil {
+					if err == io.EOF { // Last document.
+						break
+					}
+					return errors.Wrapf(err, "failed to decode file %v", filename)
+				}
+
+				if err := enc.Encode(&doc); err != nil {
+					return errors.Wrap(err, "failed to write to stdout")
+				}
+			}
+
+			if err := f.Close(); err != nil {
+				return errors.Wrap(err, "failed to close file")
+			}
+		}
+		os.Exit(0)
+	}
+
+	dec := yamlv3.NewDecoder(os.Stdin)
+	for { // For all YAML documents in STDIN.
 		var doc yamlv3.Node
 		if err := dec.Decode(&doc); err != nil {
 			if err == io.EOF { // Last document.
