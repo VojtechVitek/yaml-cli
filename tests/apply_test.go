@@ -48,7 +48,6 @@ func TestApply(t *testing.T) {
 			}
 
 			for _, tf := range transformations {
-				t.Logf("tf[%v]: %+v", tf.Matches, doc.Content)
 				if err := tf.Apply(&doc); err != nil {
 					t.Error(err)
 				}
@@ -56,6 +55,8 @@ func TestApply(t *testing.T) {
 
 			_ = enc.Encode(&doc)
 		}
+
+		// t.Logf("\n\n%s\n\n", b.Bytes())
 
 		if diff := cmp.Diff(tc.out, b.Bytes()); diff != "" {
 			t.Errorf("tc[%v] mismatch (-want +got):\n%s", i, diff)

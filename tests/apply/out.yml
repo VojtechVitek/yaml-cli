@@ -25,8 +25,7 @@ spec:
         - -config=/etc/embedder.toml
         command:
         - embedder
-        image: "example.com/embedder:v19.7.1"
-        imagePullPolicy: IfNotPresent
+        image: example.com/embedder:v19.7.1
         livenessProbe:
           httpGet:
             path: /ping
@@ -44,6 +43,7 @@ spec:
           requests:
             cpu: 0.1
             memory: 50Mi
+        imagePullPolicy: IfNotPresent
       nodeSelector:
         worker-role: generic
 ---

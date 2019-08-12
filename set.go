@@ -1,6 +1,7 @@
 package yaml
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -34,11 +35,41 @@ func Set(doc *yaml.Node, path string, value *yaml.Node) error {
 
 func findOrCreateNode(node *yaml.Node, selectors []string) (*yaml.Node, error) {
 	currentSelector := selectors[0]
-	lastSelector := len(selectors) == 1
+
+	// array[N] selectors.
+
+	if i := strings.LastIndex(currentSelector, "["); i > 0 && strings.HasSuffix(currentSelector, "]") {
+		arrayIndex := currentSelector[i+1 : len(currentSelector)-1]
+		currentSelector = currentSelector[:i]
+
+		// TODO: Can we do array[*], ie. set value in each array item?
+		index, err := strconv.Atoi(arrayIndex)
+		if err != nil {
+			return nil, errors.Wrapf(err, "can't parse array index from %v[%v]", currentSelector, arrayIndex)
+		}
+
+		// Go into an array.
+		node, err = findOrCreateNode(node, []string{currentSelector})
+		if err != nil {
+			return nil, errors.Errorf("can't find %v", currentSelector)
+		}
+
+		if node.Kind != yaml.SequenceNode {
+			return nil, errors.Errorf("%v is not an array", currentSelector)
+		}
+
+		if index > len(node.Content) {
+			return nil, errors.Errorf("%v array doesn't have index %v", currentSelector, index)
+		}
+
+		return findOrCreateNode(node.Content[index], selectors[1:])
+	}
 
 	// Iterate over the keys (the slice is key/value pairs).
 	switch node.Kind {
 	case yaml.MappingNode:
+		lastSelector := len(selectors) == 1
+
 		for i := 0; i < len(node.Content); i += 2 {
 			// Does current key match the selector?
 			if node.Content[i].Value == currentSelector {
@@ -52,11 +83,13 @@ func findOrCreateNode(node *yaml.Node, selectors []string) (*yaml.Node, error) {
 				return node.Content[i+1], nil
 			}
 		}
+
 	case yaml.ScalarNode:
 		// Overwrite any existing nodes.
 		node.Kind = yaml.MappingNode
 		node.Tag = "!!map"
 		node.Value = ""
+
 	default:
 		return nil, errors.Errorf("unknown node.Kind %v", node.Kind)
 	}

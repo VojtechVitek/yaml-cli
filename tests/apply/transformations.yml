@@ -11,9 +11,9 @@ set:
 ---
 match:
   kind: Deployment
-  name: embedder
+  metadata.name: embedder
 set:
-  spec.template.spec.containers[0].image: "pressly/api:v19.7.1"
+  spec.template.spec.containers[0].image: example.com/embedder:v19.7.1
   spec.template.spec.containers[0].imagePullPolicy: IfNotPresent
 ---
 match:
