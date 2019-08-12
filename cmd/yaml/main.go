@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/VojtechVitek/yaml"
 	"github.com/pkg/errors"
@@ -70,21 +71,18 @@ func runCLI() error {
 		}
 
 	case "grep":
-		arg := 2
-		invert := false
+		selectors := os.Args[2:]
 
 		// yaml grep -v "something"
-		if os.Args[arg] == "-v" {
+		invert := false
+		if selectors[0] == "-v" {
 			invert = true
-			arg++
+			selectors = selectors[1:]
 		}
 
-		// yaml grep -v "something"
-		selector := os.Args[arg]
-
-		tf, err := yaml.ParseTransformation([]byte(fmt.Sprintf("match:\n  %v", selector)))
+		tf, err := yaml.ParseTransformation([]byte(fmt.Sprintf("match:\n  %v", strings.Join(selectors, "\n  "))))
 		if err != nil {
-			return errors.Wrapf(err, "failed to parse grep `key: value' pair from %q", selector)
+			return errors.Wrapf(err, "failed to parse grep `key: value' pairs from %q", selectors)
 		}
 
 		ok, _ := tf.MustMatchAll(doc)
