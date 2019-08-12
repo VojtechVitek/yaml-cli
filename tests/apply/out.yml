@@ -43,6 +43,11 @@ spec:
           requests:
             cpu: 0.1
             memory: 50Mi
+        env:
+        - name: FOO
+          value: BAR
+        - name: ENV
+          value: staging
         imagePullPolicy: IfNotPresent
       nodeSelector:
         worker-role: generic

@@ -15,6 +15,9 @@ match:
 set:
   spec.template.spec.containers[0].image: example.com/embedder:v19.7.1
   spec.template.spec.containers[0].imagePullPolicy: IfNotPresent
+  spec.template.spec.containers[0].env:
+    - name: ENV
+      value: staging
 ---
 match:
   kind: Service

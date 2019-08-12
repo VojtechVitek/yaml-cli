@@ -26,6 +26,9 @@ func Set(doc *yaml.Node, path string, value *yaml.Node) error {
 	} else if node.Kind == yaml.ScalarNode && value.Kind == yaml.ScalarNode {
 		// Overwrite an existing scalar value with a new value.
 		*node = *value
+	} else if node.Kind == yaml.SequenceNode && value.Kind == yaml.SequenceNode {
+		// Append new values onto an existing array node.
+		node.Content = append(node.Content, value.Content...)
 	} else {
 		return errors.Errorf("can't overwrite %v value with %v value", node.Tag, value.Tag)
 	}
