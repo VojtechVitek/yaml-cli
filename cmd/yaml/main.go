@@ -94,11 +94,6 @@ func runCLI() error {
 
 			for i, filename := range filenames {
 				for _, tf := range tfs[i] {
-					ok, _ := tf.MustMatchAll(&doc)
-					if !ok {
-						continue
-					}
-
 					if err := tf.Apply(&doc); err != nil {
 						return errors.Wrapf(err, "failed to apply %v. transformation from %v", i+1, filename)
 					}

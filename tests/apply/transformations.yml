@@ -1,0 +1,23 @@
+match:
+  # all
+set:
+  metadata.namespace: staging
+---
+match:
+  kind: Deployment
+set:
+  spec.template.spec.nodeSelector:
+    worker-role: generic
+---
+match:
+  kind: Deployment
+  name: embedder
+set:
+  spec.template.spec.containers[0].image: "pressly/api:v19.7.1"
+  spec.template.spec.containers[0].imagePullPolicy: IfNotPresent
+---
+match:
+  kind: Service
+set:
+  metadata.annotations:
+     kubernetes.io/ingress.class: nginx

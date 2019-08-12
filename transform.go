@@ -33,6 +33,11 @@ func Transformations(r io.Reader) ([]*Transformation, error) {
 }
 
 func (t *Transformation) Apply(doc *yaml.Node) error {
+	ok, _ := t.MustMatchAll(doc)
+	if !ok {
+		return nil
+	}
+
 	if err := t.ApplySet(doc); err != nil {
 		return err
 	}

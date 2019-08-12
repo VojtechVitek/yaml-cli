@@ -21,11 +21,10 @@ spec:
     spec:
       containers:
       - args:
-        - -config=/etc/hubs/backend.toml
+        - -config=/etc/embedder.toml
         command:
         - embedder
-        image: pressly/api
-        imagePullPolicy: IfNotPresent
+        image: example.com/embedder
         livenessProbe:
           httpGet:
             path: /ping
@@ -43,3 +42,19 @@ spec:
           requests:
             cpu: 0.1
             memory: 50Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: embedder
+  labels:
+    app: embedder
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    name: http
+    protocol: TCP
+    targetPort: 6363
+  selector:
+    app: embedder
