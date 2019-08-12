@@ -29,7 +29,7 @@ $ cat k8s-desired-state.yml | yaml match "kind: Deployment" "metadata.name: redi
 $ cat deployment.yml | yaml apply staging.yml > desired-state.yml
 ```
 
-deployment.yml:
+Original object (deployment.yml):
 ```yml
 apiVersion: apps/v1
 kind: Deployment
@@ -42,7 +42,7 @@ spec:
     replicas: 1
 ```
 
-staging.yml:
+Transformation (staging.yml):
 ```yml
 match:
     kind: Deployment
@@ -53,7 +53,7 @@ set:
     spec.replicas: 3
 ```
 
-desired-state:
+Changes applied to the original object:
 ```diff
  metadata:
      name: api
