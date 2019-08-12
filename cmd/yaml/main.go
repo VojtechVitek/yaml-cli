@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -67,6 +68,31 @@ func runCLI() error {
 				return errors.Wrapf(err, "failed to apply transformation %v", filenames[i])
 			}
 		}
+
+	case "grep":
+		arg := 2
+		invert := false
+
+		// yaml grep -v "something"
+		if os.Args[arg] == "-v" {
+			invert = true
+			arg++
+		}
+
+		// yaml grep -v "something"
+		selector := os.Args[arg]
+
+		tf, err := yaml.ParseTransformation([]byte(fmt.Sprintf("match:\n  %v", selector)))
+		if err != nil {
+			return errors.Wrapf(err, "failed to parse grep `key: value' pair from %q", selector)
+		}
+
+		ok, _ := tf.MustMatchAll(doc)
+		if ok == invert {
+			return nil // Return; do not print anything out.
+		}
+
+		// Print out original doc.
 
 	case "delete":
 		selector := os.Args[2]

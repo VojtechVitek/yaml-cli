@@ -17,6 +17,28 @@ $ cat input.yml | yaml delete "metadata.labels.environment" > output.yml
 
 # Add default value (if no such value exists yet)
 $ cat input.yml | yaml default "metadata.labels.environment" "staging" > output.yml
+
+# Grep YAML object(s):
+$ cat desired-state.yml | yaml grep "kind: Deployment"
+```
+
+## Kubernetes examples
+
+### Rollout deployments sequentially
+```bash
+# Apply all K8s objects except for Deployments first:
+$ cat desired-state.yml | yaml grep -v "kind: Deployment" | kubectl apply -f -
+
+# Apply deployments sequentially, ie. define order in which specific microservices are rolled out.
+$ for app in embedder api frontend; do
+    cat desired-state.yml | yaml grep "kind: Deployment" "metadata.name: $app" | kubectl apply -f -
+    kubectl rollout status --timeout 120 deploy/$app
+    if [ $? -ne 0 ]; then
+        kubectl rollout redo deploy/$app
+        # Notify about failed deployment.
+        exit 1
+    fi
+  done
 ```
 
 ## Match the YAML objects before applying transformation:
