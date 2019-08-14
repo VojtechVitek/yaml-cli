@@ -131,11 +131,16 @@ func runCLI() error {
 				return errors.Wrapf(err, "failed to get %q", selector)
 			}
 
+			// Don't reuse top level encoder; we don't want to render
+			// multiple YAML documents separated by `---`.
+			enc := yamlv3.NewEncoder(os.Stdout)
+			enc.SetIndent(2)
+
 			if err := enc.Encode(node); err != nil {
 				return errors.Wrap(err, "failed to write to stdout")
 			}
 
-			return nil
+			continue
 
 		case "delete":
 			selector := os.Args[2]
