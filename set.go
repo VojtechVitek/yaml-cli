@@ -40,7 +40,6 @@ func findOrCreateNode(node *yaml.Node, selectors []string) (*yaml.Node, error) {
 	currentSelector := selectors[0]
 
 	// array[N] selectors.
-
 	if i := strings.LastIndex(currentSelector, "["); i > 0 && strings.HasSuffix(currentSelector, "]") {
 		arrayIndex := currentSelector[i+1 : len(currentSelector)-1]
 		currentSelector = currentSelector[:i]

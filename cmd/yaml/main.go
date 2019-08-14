@@ -123,6 +123,20 @@ func runCLI() error {
 
 			// Print out original doc.
 
+		case "get":
+			selector := os.Args[2]
+
+			node, err := yaml.Get(&doc, selector)
+			if err != nil {
+				return errors.Wrapf(err, "failed to get %q", selector)
+			}
+
+			if err := enc.Encode(node); err != nil {
+				return errors.Wrap(err, "failed to write to stdout")
+			}
+
+			return nil
+
 		case "delete":
 			selector := os.Args[2]
 
