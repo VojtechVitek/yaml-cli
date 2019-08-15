@@ -165,5 +165,26 @@ set:
     metadata.we.cant.merge.such.properly.just: yet
 ```
 
+2. Match with arrays
+```yaml
+match:
+    spec.template.spec.containers[0].image: pressly/api
+```
+Doesn't look at the containers[] array yet.
+
+3. "OR" matches
+Ideally, we could define logical OR operation with grep or match, ie. match that or that.
+```yaml
+match:
+  key:
+    - this
+    - that
+```
+or
+```yaml
+match:
+    key: IN(this, that)
+```
+
 ### Feedback
 Any feedback welcome! Please open issues and feature requests..
