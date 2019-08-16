@@ -110,11 +110,11 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			tf := tfs[0]
 
 			ok, _ := tf.MustMatchAll(&doc)
-			if ok == invert {
-				continue // Do not print anything out.
+			if ok != invert { // match
+				if err := enc.Encode(&doc); err != nil {
+					return errors.Wrap(err, "failed to write to stdout")
+				}
 			}
-
-			// Print out original doc.
 
 		case "get":
 			selector := args[2]
@@ -133,8 +133,6 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 				return errors.Wrap(err, "failed to write to stdout")
 			}
 
-			continue
-
 		case "delete":
 			selector := args[2]
 
@@ -146,10 +144,6 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 
 		default:
 			return errors.Errorf("%v: unknown command", args[1])
-		}
-
-		if err := enc.Encode(&doc); err != nil {
-			return errors.Wrap(err, "failed to write to stdout")
 		}
 	}
 

@@ -8,9 +8,9 @@ import (
 )
 
 type Transformation struct {
-	Matches map[string]string `yaml:"match"`
-	Sets    yaml.Node         `yaml:"set"`
-	Deletes []string          `yaml:"delete"`
+	Matches map[string]yaml.Node `yaml:"match"`
+	Sets    yaml.Node            `yaml:"set"`
+	Deletes []string             `yaml:"delete"`
 }
 
 func Transformations(r io.Reader) ([]*Transformation, error) {

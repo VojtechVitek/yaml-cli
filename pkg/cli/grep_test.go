@@ -1,4 +1,4 @@
-package yaml_test
+package cli_test
 
 import (
 	"bytes"
@@ -22,7 +22,7 @@ func TestGrep(t *testing.T) {
 		},
 		{
 			in:  fooYAML,
-			cmd: []string{"yaml", "grep", "foo: bar", "foo: baz"},
+			cmd: []string{"yaml", "grep", "foo: [bar, baz]"},
 			out: []byte(`foo: bar
 ---
 foo: baz
@@ -31,7 +31,7 @@ foo: baz
 		{
 			in:  fooYAML,
 			cmd: []string{"yaml", "grep", "doesnt: exist"},
-			out: []byte(``),
+			out: nil,
 		},
 	}
 
@@ -39,7 +39,7 @@ foo: baz
 		var b bytes.Buffer
 
 		if err := cli.Run(&b, bytes.NewReader(tc.in), tc.cmd); err != nil {
-			t.Error(err)
+			t.Errorf("tc[%v]: %v", i, err)
 		}
 
 		if diff := cmp.Diff(tc.out, b.Bytes()); diff != "" {
@@ -52,20 +52,20 @@ var fooYAML = []byte(`---
 foo: bar
 ---
 foo: baz
---
+---
 # empty
---
+---
 no-foo: nope
---
+---
 foo: nope
---
+---
 foo:
   - bar
---
+---
 foo:
   - bar
   - baz
---
+---
 foo:
   bar: baz
 `)
