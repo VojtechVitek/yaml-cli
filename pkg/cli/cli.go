@@ -93,6 +93,10 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 				}
 			}
 
+			if err := enc.Encode(&doc); err != nil {
+				return errors.Wrap(err, "failed to write to stdout")
+			}
+
 		case "grep":
 			selectors := args[2:]
 
