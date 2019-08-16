@@ -2,6 +2,7 @@ package cli_test
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 
 	"github.com/VojtechVitek/yaml/pkg/cli"
@@ -32,6 +33,16 @@ foo: baz
 			in:  fooYAML,
 			cmd: []string{"yaml", "grep", "doesnt: exist"},
 			out: nil,
+		},
+		{
+			in:  []byte(fmt.Sprintf("foo: bar\n---\nfoo: baz\n---\nfoo: x")),
+			cmd: []string{"yaml", "grep", "foo: [bar, baz]"},
+			out: []byte(fmt.Sprintf("foo: bar\n---\nfoo: baz\n")),
+		},
+		{
+			in:  []byte(fmt.Sprintf("foo: bar\n---\nfoo: baz\n---\nfoo: x")),
+			cmd: []string{"yaml", "grep", "-v", "foo: [bar, baz]"},
+			out: []byte(fmt.Sprintf("foo: x\n")),
 		},
 	}
 
