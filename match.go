@@ -8,35 +8,41 @@ import (
 )
 
 func (t *Transformation) MustMatchAll(doc *yaml.Node) (bool, error) {
-nextMatch:
 	for path, want := range t.Matches {
 		selectors := strings.Split(path, ".")
-
 		got, err := findMatchingNode(doc.Content[0], selectors)
 		if err != nil {
 			return false, errors.Wrapf(err, "failed to match %q", path)
 		}
 
-		switch want.Kind {
-		case yaml.ScalarNode:
-			if got.Value == want.Value {
-				continue nextMatch
-			}
-			return false, errors.Errorf("failed to match %q (want %q, got %q)", path, want.Value, got.Value)
-
-		case yaml.SequenceNode:
-			for _, wantOneOf := range want.Content {
-				if got.Value == wantOneOf.Value {
-					continue nextMatch
-				}
-			}
-			return false, errors.Errorf("failed to match %q (want one of %v values, got %q)", path, want.Content, got.Value)
-
-		default:
-			return false, errors.Errorf("match %q: invalid type; match can be only scalar value or array", path)
+		if err := match(&want, got); err != nil {
+			return false, errors.Wrapf(err, "failed to match %q", path)
 		}
 	}
 	return true, nil
+}
+
+func match(want *yaml.Node, got *yaml.Node) error {
+	switch want.Kind {
+	case yaml.ScalarNode:
+		if got.Value == want.Value {
+			return nil
+		}
+		return errors.Errorf("want %q, got %q", want.Value, got.Value)
+
+	case yaml.SequenceNode:
+		for _, wantOneOf := range want.Content {
+			if got.Value == wantOneOf.Value {
+				return nil
+			}
+		}
+		return errors.Errorf("want one of %v values, got %q", want.Content, got.Value)
+
+	default:
+		return errors.Errorf("invalid type; match maches against scalar values or values defined in an array")
+	}
+
+	panic("unreachable")
 }
 
 func findMatchingNode(node *yaml.Node, selectors []string) (*yaml.Node, error) {
