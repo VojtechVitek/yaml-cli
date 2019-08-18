@@ -11,7 +11,7 @@ import (
 func Get(doc *yaml.Node, path string) (*yaml.Node, error) {
 	selectors := strings.Split(path, ".")
 
-	node, err := findOrCreateNode(doc.Content[0], selectors)
+	node, err := findNode(doc.Content[0], selectors)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to match %q", path)
 	}
@@ -43,10 +43,13 @@ func findNode(node *yaml.Node, selectors []string) (*yaml.Node, error) {
 			return nil, errors.Errorf("%v is not an array", currentSelector)
 		}
 
-		if index > len(node.Content) {
+		if index >= len(node.Content) {
 			return nil, errors.Errorf("%v array doesn't have index %v", currentSelector, index)
 		}
 
+		if len(selectors) == 1 { // Last selector.
+			return node.Content[index], nil
+		}
 		return findNode(node.Content[index], selectors[1:])
 	}
 
@@ -76,5 +79,5 @@ func findNode(node *yaml.Node, selectors []string) (*yaml.Node, error) {
 		return nil, errors.Errorf("unknown node.Kind %v", node.Kind)
 	}
 
-	panic("unreachable")
+	return nil, errors.Errorf("can't find node %q", currentSelector)
 }

@@ -17,9 +17,9 @@ func TestApply(t *testing.T) {
 		out []byte
 	}{
 		{
-			in:  openFile("../../tests/apply/in.yml"),
-			cmd: []string{"yaml", "apply", "../../tests/apply/transformations.yml"},
-			out: readFile("../../tests/apply/out.yml"),
+			in:  openFile("_testfiles/apply/in.yml"),
+			cmd: []string{"yaml", "apply", "_testfiles/apply/transformations.yml"},
+			out: readFile("_testfiles/apply/out.yml"),
 		},
 	}
 
