@@ -24,7 +24,6 @@ A CLI tool for transforming YAML files: Grep objects, join files, get/add/edit/d
     - [Push all non-pod objects to k8s](#push-all-non-pod-objects-to-k8s)
     - [Rollout k8s deployments from desired-state files sequentially](#rollout-k8s-deployments-from-desired-state-files-sequentially)
 - [Known issues](#known-issues)
-- [TODO](#todo)
 - [Feedback](#feedback)
 - [License](#license)
 
@@ -33,13 +32,13 @@ A CLI tool for transforming YAML files: Grep objects, join files, get/add/edit/d
 ## yaml set $key $value
 ```bash
 # Add/overwrite field's value
-$ cat input.yml | yaml set "metadata.labels.environment" "staging" > output.yml
+$ cat input.yml | yaml set "metadata.labels.environment: staging" > output.yml
 ```
 
 ## yaml default $key $value
 ```bash
 # Add default value (if no such value exists yet)
-$ cat input.yml | yaml default "metadata.labels.environment" "staging" > output.yml
+$ cat input.yml | yaml default "metadata.labels.environment: staging" > output.yml
 ```
 
 ## yaml delete $key
@@ -225,9 +224,6 @@ set:
 match:
     spec.template.spec.containers[*].name: prometheus
 ```
-
-# TODO
-1. Should we change the `yaml set/default` arguments to `"key: Value"` pairs?
 
 # Feedback
 Any feedback welcome! Please open issues and feature requests..

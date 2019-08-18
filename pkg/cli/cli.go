@@ -137,6 +137,24 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 				return errors.Wrap(err, "failed to write to stdout")
 			}
 
+		case "set":
+			keyValues := args[2:]
+
+			tfs, err := yaml.Transformations(strings.NewReader(fmt.Sprintf("match:\nset:\n  %v", strings.Join(keyValues, "\n  "))))
+			if err != nil {
+				return errors.Wrapf(err, "failed to parse `key: value' pairs from %v", keyValues)
+			}
+
+			for _, tf := range tfs {
+				if err := tf.Apply(&doc); err != nil {
+					return errors.Wrapf(err, "failed to set %v", tf.Sets)
+				}
+			}
+
+			if err := enc.Encode(&doc); err != nil {
+				return errors.Wrap(err, "failed to write to stdout")
+			}
+
 		case "delete":
 			selector := args[2]
 

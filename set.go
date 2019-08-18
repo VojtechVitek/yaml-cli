@@ -15,15 +15,15 @@ func Set(doc *yaml.Node, path string, value *yaml.Node) error {
 		return errors.Wrapf(err, "failed to match %q", path)
 	}
 
-	if node.Kind == yaml.MappingNode && value.Kind == yaml.MappingNode {
+	if node.Kind == yaml.ScalarNode {
+		// Overwrite an existing scalar value with a new value (whatever kind).
+		*node = *value
+	} else if node.Kind == yaml.MappingNode && value.Kind == yaml.MappingNode {
 		// Append new values onto an existing map node.
 		node.Content = append(node.Content, value.Content...)
 	} else if node.Kind == yaml.MappingNode && node.Content == nil {
 		// Overwrite a new map node we created in findNode(), as confirmed
 		// by the nil check (the node.Content wouldn't be nil otherwise).
-		*node = *value
-	} else if node.Kind == yaml.ScalarNode && value.Kind == yaml.ScalarNode {
-		// Overwrite an existing scalar value with a new value.
 		*node = *value
 	} else if node.Kind == yaml.SequenceNode && value.Kind == yaml.SequenceNode {
 		// Append new values onto an existing array node.
