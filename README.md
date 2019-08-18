@@ -6,12 +6,12 @@ A CLI tool for transforming YAML files: Grep objects, join files, get/add/edit/d
 *Note: The `input.yml` file might contain multiple YAML documents/objects separated by `---`.*
 
 - [Simple YAML transformations](#simple-yaml-transformations)
-  - [yaml set $key $value](#yaml-set-key-value)
-  - [yaml default $key $value](#yaml-default-key-value)
-  - [yaml delete $key](#yaml-delete-key)
-  - [yaml join file1.yml file2.yml ...](#yaml-join-file1yml-file2yml)
+  - [yaml set "key: value"](#yaml-set-%22key-value%22)
+  - [yaml default "key: value"](#yaml-default-%22key-value%22)
+  - [yaml delete "key"](#yaml-delete-%22key%22)
+  - [yaml join file1.yml file2.yml fileN.yml](#yaml-join-file1yml-file2yml-filenyml)
 - [Transformation files](#transformation-files)
-  - [yaml apply file1.yml file2.yml ...](#yaml-apply-file1yml-file2yml)
+  - [yaml apply file1.yml file2.yml fileN.yml](#yaml-apply-file1yml-file2yml-filenyml)
     - [Examples of transformation YAML files](#examples-of-transformation-yaml-files)
 - [Print YAML nodes](#print-yaml-nodes)
   - [yaml get "key"](#yaml-get-%22key%22)
@@ -29,25 +29,25 @@ A CLI tool for transforming YAML files: Grep objects, join files, get/add/edit/d
 
 # Simple YAML transformations
 
-## yaml set $key $value
+## yaml set "key: value"
 ```bash
 # Add/overwrite field's value
 $ cat input.yml | yaml set "metadata.labels.environment: staging" > output.yml
 ```
 
-## yaml default $key $value
+## yaml default "key: value"
 ```bash
 # Add default value (if no such value exists yet)
 $ cat input.yml | yaml default "metadata.labels.environment: staging" > output.yml
 ```
 
-## yaml delete $key
+## yaml delete "key"
 ```bash
 # Delete specific field
 $ cat input.yml | yaml delete "metadata.labels.environment" > output.yml
 ```
 
-## yaml join file1.yml file2.yml ...
+## yaml join file1.yml file2.yml fileN.yml
 ```bash
 # Join multiple YAML files into one, where all documents/objects are separated by `---`
 $ yaml cat k8s-apps/*.yml > output.yml
@@ -55,7 +55,7 @@ $ yaml cat k8s-apps/*.yml > output.yml
 
 # Transformation files
 
-## yaml apply file1.yml file2.yml ...
+## yaml apply file1.yml file2.yml fileN.yml
 
 ```bash
 $ yaml cat k8s-apps/*.yml | yaml apply staging.yml enable-linkerd.yml > staging/desired-state.yml
