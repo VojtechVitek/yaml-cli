@@ -1,9 +1,9 @@
-# yaml CLI transformer
-A CLI tool for transforming YAML files (add, edit, delete YAML nodes based on selectors)
+# yaml CLI
+A CLI tool for transforming YAML files: Grep objects, join files, get/add/edit/delete YAML nodes based on selectors etc.
 
 `[input.yml] => [apply transformations] => [output.yml]`
 
-*Note: The input file might contain multiple YAML documents separated by `---`.*
+*Note: The `input.yml` file might contain multiple YAML documents separated by `---`.*
 
 ## == Work in progress.. not stable yet! ==
 
@@ -24,10 +24,10 @@ $ cat input.yml | yaml delete "metadata.labels.environment" > output.yml
 $ cat input.yml | yaml default "metadata.labels.environment" "staging" > output.yml
 ```
 
-## Applying transformations from multiple files
+## Applying transformations from files
 
 ```bash
-$ yaml cat *.yml | yaml apply staging.yml enable-linkerd.yml > staging/desired-state.yml
+$ yaml cat k8s-apps/*.yml | yaml apply staging.yml enable-linkerd.yml > staging/desired-state.yml
 ```
 
 staging.yml:
@@ -56,6 +56,8 @@ default:
 
 Changes applied to the original object:
 ```diff
+ apiVersion: apps/v1
+ kind: Deployment
  metadata:
      name: api
      labels:
@@ -68,9 +70,16 @@ Changes applied to the original object:
  spec:
 -    replicas: 1
 +    replicas: 3
+ ...
 ```
 
-## Helpful CLI tools:
+## Helpful CLI commands:
+
+### Get image tag of pod's main container:
+```bash
+$ kubectl get pods/nats-8576dfb67-vg6v7 -o yaml | yaml get spec.containers[0].image
+nats-streaming:0.10.0
+```
 
 ### Grep k8s deployment object by name
 ```bash
