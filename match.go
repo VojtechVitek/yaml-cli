@@ -10,7 +10,7 @@ import (
 func (t *Transformation) MustMatchAll(doc *yaml.Node) (bool, error) {
 	for path, want := range t.Matches {
 		selectors := strings.Split(path, ".")
-		got, err := findMatchingNode(doc.Content[0], selectors)
+		got, err := findNode(doc.Content[0], selectors, false)
 		if err != nil {
 			return false, errors.Wrapf(err, "failed to match %q", path)
 		}
@@ -43,25 +43,4 @@ func match(want *yaml.Node, got *yaml.Node) error {
 	}
 
 	panic("unreachable")
-}
-
-func findMatchingNode(node *yaml.Node, selectors []string) (*yaml.Node, error) {
-	currentSelector := selectors[0]
-	lastSelector := len(selectors) == 1
-
-	// Iterate over the keys (the slice is key/value pairs).
-	for i := 0; i < len(node.Content); i += 2 {
-		// Does current key match the selector?
-		if node.Content[i].Value == currentSelector {
-			if !lastSelector {
-				// Try to match the rest of the selector path in the value.
-				return findMatchingNode(node.Content[i+1], selectors[1:])
-			}
-
-			// Found last key, return its value.
-			return node.Content[i+1], nil
-		}
-	}
-
-	return nil, errors.Errorf("can't find %q", strings.Join(selectors, "."))
 }
