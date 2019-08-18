@@ -5,20 +5,22 @@ A CLI tool for transforming YAML files: Grep objects, join files, get/add/edit/d
 
 *Note: The `input.yml` file might contain multiple YAML documents/objects separated by `---`.*
 
-- [Simple YAML transformations](#simple-yaml-transformations)
+- [One-liner transformations](#one-liner-transformations)
   - [yaml set "key: value"](#yaml-set-%22key-value%22)
   - [yaml default "key: value"](#yaml-default-%22key-value%22)
   - [yaml delete "key"](#yaml-delete-%22key%22)
-  - [yaml join file1.yml file2.yml fileN.yml](#yaml-join-file1yml-file2yml-filenyml)
+  - [yaml cat file1.yml file2.yml fileN.yml](#yaml-cat-file1yml-file2yml-filenyml)
 - [Transformation files](#transformation-files)
   - [yaml apply file1.yml file2.yml fileN.yml](#yaml-apply-file1yml-file2yml-filenyml)
     - [Examples of transformation YAML files](#examples-of-transformation-yaml-files)
-- [Print YAML nodes](#print-yaml-nodes)
+- [Print selected YAML nodes](#print-selected-yaml-nodes)
   - [yaml get "key"](#yaml-get-%22key%22)
     - [kubectl - print pod's main container image](#kubectl---print-pods-main-container-image)
-- [Grep objects](#grep-objects)
+- [Grep documents/objects](#grep-documentsobjects)
   - [yaml grep "key: value" ...](#yaml-grep-%22key-value%22)
     - [Grep k8s deployment object by name](#grep-k8s-deployment-object-by-name)
+  - [yaml grep -v "key: value" ...](#yaml-grep--v-%22key-value%22)
+    - [Grep all k8s objects that don't create Pods](#grep-all-k8s-objects-that-dont-create-pods)
     - [Print first container's image of linkerd2 deployment objects](#print-first-containers-image-of-linkerd2-deployment-objects)
 - [Useful Kubernetes examples](#useful-kubernetes-examples)
     - [Push all non-pod objects to k8s](#push-all-non-pod-objects-to-k8s)
@@ -27,7 +29,7 @@ A CLI tool for transforming YAML files: Grep objects, join files, get/add/edit/d
 - [Feedback](#feedback)
 - [License](#license)
 
-# Simple YAML transformations
+# One-liner transformations
 
 ## yaml set "key: value"
 ```bash
@@ -47,7 +49,7 @@ $ cat input.yml | yaml default "metadata.labels.environment: staging" > output.y
 $ cat input.yml | yaml delete "metadata.labels.environment" > output.yml
 ```
 
-## yaml join file1.yml file2.yml fileN.yml
+## yaml cat file1.yml file2.yml fileN.yml
 ```bash
 # Join multiple YAML files into one, where all documents/objects are separated by `---`
 $ yaml cat k8s-apps/*.yml > output.yml
@@ -148,7 +150,7 @@ set:
     spec.template.spec.containers[0].image: nats-streaming:0.15.1
 ```
 
-# Print YAML nodes
+# Print selected YAML nodes
 ## yaml get "key"
 ### kubectl - print pod's main container image
 ```bash
@@ -156,11 +158,21 @@ $ kubectl get pods/nats-8576dfb67-vg6v7 -o yaml | yaml get spec.containers[0].im
 nats-streaming:0.10.0
 ```
 
-# Grep objects
+# Grep documents/objects
+Grep documents/objects matching all of the given `key: value` pairs.
+
+If a value is an array (ie. `key: [first, second]`), the key must match at least one of the values (a logical "OR").
+
 ## yaml grep "key: value" ...
 ### Grep k8s deployment object by name
 ```bash
 $ cat desired-state.yml | yaml grep "kind: Deployment" "metadata.name: linkerd"
+```
+
+## yaml grep -v "key: value" ...
+### Grep all k8s objects that don't create Pods
+```bash
+$ cat desired-state.yml | yaml grep -v "kind: [Deployment, Pod, Job, ReplicaSet, ReplicationController]"
 ```
 
 ### Print first container's image of linkerd2 deployment objects
