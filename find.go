@@ -61,6 +61,10 @@ func findNode(node *yaml.Node, selectors []string, create bool) (*yaml.Node, err
 			}
 		}
 
+		if !create {
+			return nil, errors.Errorf("can't find node %q", currentSelector)
+		}
+
 	case yaml.ScalarNode:
 		if create {
 			// Overwrite any existing nodes.
@@ -74,9 +78,6 @@ func findNode(node *yaml.Node, selectors []string, create bool) (*yaml.Node, err
 	}
 
 	if create {
-		if node.Kind == yaml.ScalarNode {
-
-		}
 		// Create the rest of the selector path.
 		for _, selector := range selectors {
 			node.Content = append(node.Content,

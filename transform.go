@@ -2,15 +2,17 @@ package yaml
 
 import (
 	"io"
+	"log"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 )
 
 type Transformation struct {
-	Matches map[string]yaml.Node `yaml:"match"`
-	Sets    yaml.Node            `yaml:"set"`
-	Deletes []string             `yaml:"delete"`
+	Matches  map[string]yaml.Node `yaml:"match"`
+	Sets     yaml.Node            `yaml:"set"`
+	Defaults yaml.Node            `yaml:"default"`
+	Deletes  []string             `yaml:"delete"`
 }
 
 func Transformations(r io.Reader) ([]*Transformation, error) {
@@ -42,6 +44,10 @@ func (t *Transformation) Apply(doc *yaml.Node) error {
 		return err
 	}
 
+	if err := t.ApplyDefault(doc); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -51,6 +57,19 @@ func (t *Transformation) ApplySet(doc *yaml.Node) error {
 
 		if err := Set(doc, path, value); err != nil {
 			return errors.Wrapf(err, "failed to set %q", path)
+		}
+	}
+
+	return nil
+}
+
+func (t *Transformation) ApplyDefault(doc *yaml.Node) error {
+	for i := 0; i < len(t.Defaults.Content); i += 2 {
+		path, value := t.Defaults.Content[i].Value, t.Defaults.Content[i+1]
+
+		if err := SetDefault(doc, path, value); err != nil {
+			log.Printf("going to set default %v=%v", path, value)
+			return errors.Wrapf(err, "failed to set default %q", path)
 		}
 	}
 

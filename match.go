@@ -19,6 +19,7 @@ func (t *Transformation) MustMatchAll(doc *yaml.Node) (bool, error) {
 			return false, errors.Wrapf(err, "failed to match %q", path)
 		}
 	}
+
 	return true, nil
 }
 

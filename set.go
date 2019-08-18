@@ -34,3 +34,14 @@ func Set(doc *yaml.Node, path string, value *yaml.Node) error {
 
 	return nil
 }
+
+func SetDefault(doc *yaml.Node, path string, value *yaml.Node) error {
+	selectors := strings.Split(path, ".")
+
+	_, err := findNode(doc.Content[0], selectors, false)
+	if err == nil {
+		return nil
+	}
+
+	return Set(doc, path, value)
+}

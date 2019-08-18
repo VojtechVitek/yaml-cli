@@ -140,15 +140,31 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 		case "set":
 			keyValues := args[2:]
 
-			tfs, err := yaml.Transformations(strings.NewReader(fmt.Sprintf("match:\nset:\n  %v", strings.Join(keyValues, "\n  "))))
+			tfs, err := yaml.Transformations(strings.NewReader(fmt.Sprintf("set:\n  %v", strings.Join(keyValues, "\n  "))))
 			if err != nil {
 				return errors.Wrapf(err, "failed to parse `key: value' pairs from %v", keyValues)
 			}
+			tf := tfs[0]
 
-			for _, tf := range tfs {
-				if err := tf.Apply(&doc); err != nil {
-					return errors.Wrapf(err, "failed to set %v", tf.Sets)
-				}
+			if err := tf.Apply(&doc); err != nil {
+				return errors.Wrapf(err, "failed to set %v", tf.Sets)
+			}
+
+			if err := enc.Encode(&doc); err != nil {
+				return errors.Wrap(err, "failed to write to stdout")
+			}
+
+		case "default":
+			keyValues := args[2:]
+
+			tfs, err := yaml.Transformations(strings.NewReader(fmt.Sprintf("default:\n  %v", strings.Join(keyValues, "\n  "))))
+			if err != nil {
+				return errors.Wrapf(err, "failed to parse `key: value' pairs from %v", keyValues)
+			}
+			tf := tfs[0]
+
+			if err := tf.Apply(&doc); err != nil {
+				return errors.Wrapf(err, "failed to set default %v", tf.Defaults)
 			}
 
 			if err := enc.Encode(&doc); err != nil {
