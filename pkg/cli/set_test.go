@@ -7,12 +7,12 @@ import (
 func TestSet(t *testing.T) {
 	tt := []*cliTestCase{
 		{
-			in:  ``,
+			in:  "",
 			cmd: []string{"yaml", "set", ""},
-			out: ``,
+			out: "",
 		},
 		{
-			in:  `first: value`,
+			in:  "first: value",
 			cmd: []string{"yaml", "set", "second: value", "third: value"},
 			out: `first: value
 second: value
@@ -20,14 +20,19 @@ third: value
 `,
 		},
 		{
-			in:  `first: value`,
+			in:  "first: value",
 			cmd: []string{"yaml", "set", "first: [several, values]"},
 			out: "first: [several, values]\n",
 		},
 		{
-			in:  `first: [a, b]`,
+			in:  "first: [a, b]",
 			cmd: []string{"yaml", "set", "first: [several, values]"},
 			out: "first: [a, b, several, values]\n",
+		},
+		{
+			in:  "metadata:\n  overwrite: me\n",
+			cmd: []string{"yaml", "set", "metadata.overwrite: with", "metadata.overwrite: value"},
+			out: "metadata:\n  overwrite: value\n",
 		},
 	}
 

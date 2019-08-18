@@ -32,16 +32,12 @@ foo:
 		{
 			in:  fooYAML,
 			cmd: []string{"yaml", "grep", "foo: bar"},
-			out: `foo: bar
-`,
+			out: "foo: bar\n",
 		},
 		{
 			in:  fooYAML,
 			cmd: []string{"yaml", "grep", "foo: [bar, baz]"},
-			out: `foo: bar
----
-foo: baz
-`,
+			out: "foo: bar\n---\nfoo: baz\n",
 		},
 		{
 			in:  fooYAML,
