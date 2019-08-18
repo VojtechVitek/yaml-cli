@@ -248,7 +248,7 @@ Since the `match` selectors are separated with `.` dots, we'll have to figure ou
 We might wanna support
 ```yml
 delete:
-    metadata.annotations."linkerd.io/inject"
+    - metadata.annotations."linkerd.io/inject"
 set:
     metadata.annotations."rbac.authorization.kubernetes.io/autoupdate": true
 ```
