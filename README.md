@@ -1,4 +1,4 @@
-# yaml transformer
+# yaml CLI transformer
 A CLI tool for transforming YAML files (add, edit, delete YAML nodes based on selectors)
 
 `[input.yml] => [apply transformations] => [output.yml]`
@@ -7,73 +7,51 @@ A CLI tool for transforming YAML files (add, edit, delete YAML nodes based on se
 
 ## == Work in progress.. not stable yet! ==
 
-## Simple operations:
+## Simple YAML transformations
+
 ```bash
-# Add/overwrite field's value.
+# Add/overwrite field's value
 $ cat input.yml | yaml set "metadata.labels.environment" "staging" > output.yml
+```
 
-# Delete specific field.
+```bash
+# Delete specific field
 $ cat input.yml | yaml delete "metadata.labels.environment" > output.yml
+```
 
+```bash
 # Add default value (if no such value exists yet)
 $ cat input.yml | yaml default "metadata.labels.environment" "staging" > output.yml
-
-# Grep YAML object(s):
-$ cat desired-state.yml | yaml grep "kind: Deployment"
-$ cat desired-state.yml | yaml grep -v "kind: [Deployment, Pod]"
 ```
 
-## Kubernetes examples
+## Applying transformations from multiple files
 
-### Rollout deployments sequentially
 ```bash
-# Apply all K8s objects except for Deployments first:
-$ cat desired-state.yml | yaml grep -v "kind: Deployment" | kubectl apply -f -
-
-# Apply deployments sequentially, ie. define order in which specific microservices are rolled out.
-$ for app in embedder api frontend; do
-    cat desired-state.yml | yaml grep "kind: Deployment" "metadata.name: $app" | kubectl apply -f -
-    kubectl rollout status --timeout 120 deploy/$app
-    if [ $? -ne 0 ]; then
-        kubectl rollout redo deploy/$app
-        # Notify about failed deployment.
-        exit 1
-    fi
-  done
+$ yaml cat *.yml | yaml apply staging.yml enable-linkerd.yml > staging/desired-state.yml
 ```
 
-## Match the YAML objects before applying transformation:
-```bash
-$ cat k8s-desired-state.yml | yaml match "kind: Deployment" "metadata.name: redis" set "spec.template.spec.containers[0].image" "redis:5.0.5" > output.yml
-```
-
-## Apply transformations files:
-```bash
-$ cat deployment.yml | yaml apply staging.yml > desired-state.yml
-```
-
-Original object (deployment.yml):
+staging.yml:
 ```yml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-    name: api
-    labels:
-        first: label
-        second: label
-spec:
-    replicas: 1
-```
-
-Transformation (staging.yml):
-```yml
+match:
+    # all YAML objects
+set:
+    metadata.labels.environment: staging
+---
 match:
     kind: Deployment
     metadata.name: api
 set:
     metadata.labels.first: updated-label
-    metadata.labels.environment: staging
     spec.replicas: 3
+```
+
+enable-linkerd.yml:
+```yml
+match:
+  kind: [Deployment, Pod]
+default:
+  metadata.annotations:
+    linkerd.io/inject: enabled
 ```
 
 Changes applied to the original object:
@@ -85,18 +63,50 @@ Changes applied to the original object:
 +        first: updated-label
          second: label
 +        environment: staging
++    annotations:
++        linkerd.io/inject: enabled
  spec:
 -    replicas: 1
 +    replicas: 3
 ```
 
-## Goals
-I was frustrated by the K8s Kustomize tool and its useless error messages.
+## Helpful CLI tools:
 
-I'm seeking a simple tool to transform YAML files, ie. match some Kubernetes objects and apply some common transformations onto the fields per specific environment.
-
+### Grep k8s deployment object by name
 ```bash
-$ cat deployment.yml | yaml apply staging/transform.yml [...] > _desired/staging-deployment.yml`
+$ cat desired-state.yml | yaml grep "kind: Deployment" "metadata.name: linkerd"
+```
+
+### Print first container's image of linkerd2 deployment objects
+```bash
+$ cat linkerd.yml | yaml grep "kind: Deployment" | yaml get "spec.template.spec.containers[0].image"
+gcr.io/linkerd-io/controller:stable-2.4.0
+gcr.io/linkerd-io/controller:stable-2.4.0
+gcr.io/linkerd-io/web:stable-2.4.0
+prom/prometheus:v2.10.0
+gcr.io/linkerd-io/grafana:stable-2.4.0
+gcr.io/linkerd-io/controller:stable-2.4.0
+gcr.io/linkerd-io/controller:stable-2.4.0
+gcr.io/linkerd-io/controller:stable-2.4.0
+```
+
+### Push all non-pod objects to k8s:
+```bash
+$ cat desired-state.yml | yaml grep -v "kind: [Deployment, Pod, Job]"
+```
+
+### Rollout k8s deployments from desired-state files sequentially
+```bash
+$ for file in *.yml; do
+    out=$(cat $file | yaml grep "kind: Deployment" | kubectl apply -f -)
+
+    for deploy in $(echo "$out" | cut -d' ' -f1); do
+        kubectl rollout status --timeout 180s $deploy || {
+            kubectl rollout undo $deploy
+            exit 1
+        }
+    done
+  done
 ```
 
 ## Examples of transformation YAML files:
@@ -145,7 +155,7 @@ set:
 
 ### Known issues
 
-1. Merging complex nodes
+1. Merging complex nodes doesn't work well
 ```yaml
 set:
     metadata:
@@ -166,12 +176,11 @@ set:
     metadata.we.cant.merge.such.properly.just: yet
 ```
 
-2. Match with arrays
+2. Wildcard array matching doesn't work
 ```yaml
 match:
-    spec.template.spec.containers[0].image: pressly/api
+    spec.template.spec.containers[*].name: prometheus
 ```
-Doesn't look at the containers[] array yet.
 
 ### Feedback
 Any feedback welcome! Please open issues and feature requests..
