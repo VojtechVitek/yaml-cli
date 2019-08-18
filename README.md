@@ -237,6 +237,22 @@ match:
     spec.template.spec.containers[*].name: prometheus
 ```
 
+3. Selectors with `.` dots in the selector path, ie.
+```yml
+metadata:
+    annotations:
+        linkerd.io/inject: enabled
+```
+Since the `match` selectors are separated with `.` dots, we'll have to figure out how to support these selector keys with inner `.` dots.
+
+We might wanna support
+```yml
+delete:
+    metadata.annotations."linkerd.io/inject"
+set:
+    metadata.annotations."rbac.authorization.kubernetes.io/autoupdate": true
+```
+
 # Feedback
 Any feedback welcome! Please open issues and feature requests..
 
