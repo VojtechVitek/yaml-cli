@@ -40,12 +40,25 @@ func (t *Transformation) Apply(doc *yaml.Node) error {
 		return nil
 	}
 
+	if err := t.ApplyDeletes(doc); err != nil {
+		return err
+	}
+
 	if err := t.ApplySet(doc); err != nil {
 		return err
 	}
 
 	if err := t.ApplyDefault(doc); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (t *Transformation) ApplyDeletes(doc *yaml.Node) error {
+	for _, path := range t.Deletes {
+		// Ignore errors. We don't care if we didn't find nodes etc.
+		_ = Delete(doc, path)
 	}
 
 	return nil

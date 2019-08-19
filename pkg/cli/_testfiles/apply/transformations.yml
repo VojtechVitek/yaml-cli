@@ -1,5 +1,7 @@
 match:
   # all
+delete:
+  - metadata.labels.to-be-deleted
 set:
   metadata.namespace: staging
 ---

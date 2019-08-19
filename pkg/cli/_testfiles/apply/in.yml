@@ -4,6 +4,7 @@ metadata:
   name: embedder
   labels:
     app: embedder
+    to-be-deleted: true
 spec:
   replicas: 2
   selector:
