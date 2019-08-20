@@ -49,6 +49,37 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 		return nil
 	}
 
+	var tfs []*yaml.Transformation
+
+	if args[1] == "apply" {
+		filenames := args[2:]
+
+		fileTfs := make([][]*yaml.Transformation, len(filenames))
+
+		var g errgroup.Group
+		for i, filename := range filenames {
+			g.Go(func() error {
+				f, err := os.Open(filename)
+				if err != nil {
+					return errors.Wrapf(err, "failed to read transformation %v", filename)
+				}
+
+				fileTfs[i], err = yaml.Transformations(f)
+				if err != nil {
+					return errors.Wrapf(err, "failed to parse transformation %v", filename)
+				}
+
+				return nil
+			})
+		}
+		if err := g.Wait(); err != nil {
+			return err
+		}
+		for _, tf := range fileTfs {
+			tfs = append(tfs, tf...)
+		}
+	}
+
 	dec := yamlv3.NewDecoder(in)
 	for { // For all YAML documents in STDIN.
 		var doc yamlv3.Node
@@ -61,35 +92,9 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 
 		switch args[1] {
 		case "apply":
-			filenames := args[2:]
-			tfs := make([][]*yaml.Transformation, len(filenames))
-
-			var g errgroup.Group
-			for i, filename := range filenames {
-				i, filename := i, filename
-				g.Go(func() error {
-					f, err := os.Open(filename)
-					if err != nil {
-						return errors.Wrapf(err, "failed to read transformation %v", filename)
-					}
-
-					tfs[i], err = yaml.Transformations(f)
-					if err != nil {
-						return errors.Wrapf(err, "failed to parse transformation %v", filename)
-					}
-
-					return nil
-				})
-			}
-			if err := g.Wait(); err != nil {
-				return err
-			}
-
-			for i, filename := range filenames {
-				for _, tf := range tfs[i] {
-					if err := tf.Apply(&doc); err != nil {
-						return errors.Wrapf(err, "failed to apply %v. transformation from %v", i+1, filename)
-					}
+			for _, tf := range tfs {
+				if err := tf.Apply(&doc); err != nil {
+					return errors.Wrapf(err, "failed to apply transformation")
 				}
 			}
 
