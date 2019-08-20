@@ -120,18 +120,21 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 				}
 			}
 
-		case "get":
+		case "get", "print":
 			selector := args[2]
+
+			var enc = enc
+			if args[1] == "print" {
+				// Don't reuse top level encoder; on "get", we don't want
+				// to render multiple YAML documents separated by `---`.
+				enc = yamlv3.NewEncoder(out)
+				enc.SetIndent(2)
+			}
 
 			node, err := yaml.Get(&doc, selector)
 			if err != nil {
 				return errors.Wrapf(err, "failed to get %q", selector)
 			}
-
-			// Don't reuse top level encoder; we don't want to render
-			// multiple YAML documents separated by `---`.
-			enc := yamlv3.NewEncoder(out)
-			enc.SetIndent(2)
 
 			if err := enc.Encode(node); err != nil {
 				return errors.Wrap(err, "failed to write to stdout")
