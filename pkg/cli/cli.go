@@ -121,8 +121,6 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			}
 
 		case "get", "print":
-			selector := args[2]
-
 			var enc = enc
 			if args[1] == "print" {
 				// Don't reuse top level encoder; on "get", we don't want
@@ -131,13 +129,15 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 				enc.SetIndent(2)
 			}
 
-			node, err := yaml.Get(&doc, selector)
-			if err != nil {
-				return errors.Wrapf(err, "failed to get %q", selector)
-			}
+			for _, selector := range args[2:] {
+				node, err := yaml.Get(&doc, selector)
+				if err != nil {
+					return errors.Wrapf(err, "failed to get %q", selector)
+				}
 
-			if err := enc.Encode(node); err != nil {
-				return errors.Wrap(err, "failed to write to stdout")
+				if err := enc.Encode(node); err != nil {
+					return errors.Wrap(err, "failed to write to stdout")
+				}
 			}
 
 		case "set":
