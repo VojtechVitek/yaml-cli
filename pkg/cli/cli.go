@@ -38,7 +38,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 				}
 
 				if err := enc.Encode(&doc); err != nil {
-					return errors.Wrap(err, "failed to write to stdout")
+					return errors.Wrap(err, "failed to write to encode node")
 				}
 			}
 
@@ -94,7 +94,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			}
 
 			if err := enc.Encode(&doc); err != nil {
-				return errors.Wrap(err, "failed to write to stdout")
+				return errors.Wrap(err, "failed to write to encode node")
 			}
 
 		case "grep":
@@ -116,17 +116,14 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			ok, _ := tf.MustMatchAll(&doc)
 			if ok != invert { // match
 				if err := enc.Encode(&doc); err != nil {
-					return errors.Wrap(err, "failed to write to stdout")
+					return errors.Wrap(err, "failed to write to encode node")
 				}
 			}
 
-		case "get", "print":
-			var enc = enc
-			if args[1] == "print" {
-				// Don't reuse top level encoder; on "get", we don't want
-				// to render multiple YAML documents separated by `---`.
-				enc = yamlv3.NewEncoder(out)
-				enc.SetIndent(2)
+		case "print":
+			obj := &yamlv3.Node{
+				Kind: yamlv3.MappingNode,
+				Tag:  "!!map",
 			}
 
 			for _, selector := range args[2:] {
@@ -135,8 +132,32 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 					return errors.Wrapf(err, "failed to get %q", selector)
 				}
 
+				obj.Content = append(obj.Content,
+					&yamlv3.Node{
+						Kind:  yamlv3.ScalarNode,
+						Value: selector,
+					},
+					node,
+				)
+			}
+
+			if err := enc.Encode(obj); err != nil {
+				return errors.Wrap(err, "failed to write to encode node")
+			}
+
+		case "get":
+			for _, selector := range args[2:] {
+				node, err := yaml.Get(&doc, selector)
+				if err != nil {
+					return errors.Wrapf(err, "failed to get %q", selector)
+				}
+
+				// Don't reuse top level encoder; we don't want to render
+				// multiple YAML documents separated by `---`.
+				enc = yamlv3.NewEncoder(out)
+				enc.SetIndent(2)
 				if err := enc.Encode(node); err != nil {
-					return errors.Wrap(err, "failed to write to stdout")
+					return errors.Wrap(err, "failed to write to encode node")
 				}
 			}
 
@@ -154,7 +175,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			}
 
 			if err := enc.Encode(&doc); err != nil {
-				return errors.Wrap(err, "failed to write to stdout")
+				return errors.Wrap(err, "failed to write to encode node")
 			}
 
 		case "default":
@@ -171,7 +192,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			}
 
 			if err := enc.Encode(&doc); err != nil {
-				return errors.Wrap(err, "failed to write to stdout")
+				return errors.Wrap(err, "failed to write to encode node")
 			}
 
 		case "delete":

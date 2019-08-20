@@ -47,24 +47,25 @@ func TestGetPrint(t *testing.T) {
 		get := &cliTestCase{
 			in:  join(tc.in, "\n---\n"),
 			cmd: append([]string{"yaml", "get"}, tc.cmd...),
-			out: join(tc.out, "\n---\n"), // Get returns multiple YAML objects separated by `---`.
 			err: tc.err,
+		}
+		if tc.out != "" {
+			get.out = join(tc.out, "\n") // Get returns naked YAML node values. Not necessary a valid YAML.
 		}
 		get.runTest(t)
 
 		print := &cliTestCase{
 			in:  join(tc.in, "\n---\n"),
 			cmd: append([]string{"yaml", "print"}, tc.cmd...),
-			out: join(tc.out, "\n"), // Print returns naked lines. Not necessary a valid YAML.
 			err: tc.err,
+		}
+		if tc.out != "" {
+			print.out = join(tc.cmd[0]+": "+tc.out, "\n---\n") // Print returns multiple YAML objects separated by `---`.
 		}
 		print.runTest(t)
 	}
 }
 
 func join(str string, sep string) string {
-	if str == "" {
-		return str
-	}
 	return strings.Join([]string{str, str}, sep) + "\n"
 }
