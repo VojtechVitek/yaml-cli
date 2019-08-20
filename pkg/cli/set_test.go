@@ -34,6 +34,11 @@ third: value
 			cmd: []string{"yaml", "set", "metadata.overwrite: with", "metadata.overwrite: value"},
 			out: "metadata:\n  overwrite: value\n",
 		},
+		{
+			in:  "first: object\n---\nsecond: object\n",
+			cmd: []string{"yaml", "set", "foo: bar"},
+			out: "first: object\nfoo: bar\n---\nsecond: object\nfoo: bar\n",
+		},
 	}
 
 	for _, tc := range tt {
