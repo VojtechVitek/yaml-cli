@@ -58,6 +58,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 
 		var g errgroup.Group
 		for i, filename := range filenames {
+			i, filename := i, filename // local copy for goroutine
 			g.Go(func() error {
 				f, err := os.Open(filename)
 				if err != nil {
