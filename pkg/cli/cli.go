@@ -69,7 +69,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 					return errors.Wrapf(err, "failed to parse transformation %v", filename)
 				}
 
-				return nil
+				return f.Close()
 			})
 		}
 		if err := g.Wait(); err != nil {
