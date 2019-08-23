@@ -103,6 +103,16 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 				return errors.Wrap(err, "failed to write to encode node")
 			}
 
+		case "match":
+			for _, selector := range args[2:] {
+				_, err := yaml.Get(&doc, selector)
+				if err != nil {
+					return errors.Wrapf(err, "failed to get %q", selector)
+				}
+			}
+
+			return nil
+
 		case "grep":
 			selectors := args[2:]
 
