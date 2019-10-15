@@ -191,6 +191,17 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 				return errors.Wrap(err, "failed to write to encode node")
 			}
 
+		case "count":
+			selector := args[2]
+
+			node, err := yaml.Get(&doc, selector)
+			if err != nil {
+				return errors.Wrapf(err, "failed to get %q", selector)
+			}
+
+			fmt.Println(len(node.Content))
+			return nil
+
 		case "get":
 			for _, selector := range args[2:] {
 				node, err := yaml.Get(&doc, selector)
