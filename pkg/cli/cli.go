@@ -1,8 +1,10 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"strings"
 
@@ -51,7 +53,8 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 
 	var tfs []*yaml.Transformation
 
-	if args[1] == "apply" {
+	switch args[1] {
+	case "apply":
 		filenames := args[2:]
 
 		fileTfs := make([][]*yaml.Transformation, len(filenames))
@@ -79,6 +82,33 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 		for _, tf := range fileTfs {
 			tfs = append(tfs, tf...)
 		}
+
+	case "to":
+		b, err := ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			return errors.Wrap(err, "failed to read YAML data")
+		}
+		var data map[interface{}]interface{}
+		if err := yamlv3.Unmarshal(b, &data); err != nil {
+			return errors.Wrap(err, "failed to unmarshal YAML data")
+		}
+
+		jsonCompatibleData := convertMap(data)
+
+		format := args[2]
+		switch format {
+		case "json":
+			b, err := json.MarshalIndent(jsonCompatibleData, "", "  ")
+			if err != nil {
+				return errors.Wrap(err, "failed to marshal to JSON")
+			}
+			os.Stdout.Write(b)
+
+		default:
+			return fmt.Errorf("unknown format %q", format)
+		}
+
+		return nil
 	}
 
 	dec := yamlv3.NewDecoder(in)
