@@ -16,4 +16,4 @@ test:
 	go test ./...
 
 install:
-	go install ./cmd/sup
+	go install ./cmd/yaml
