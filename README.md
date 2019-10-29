@@ -6,23 +6,23 @@ A CLI tool for querying and transforming YAML data: Grep matching objects, join 
 *Note: The input YAML data might contain multiple YAML documents separated by `---`.*
 
 - [One-liner commands](#one-liner-commands)
-- [yaml get <selector>](#yaml-get-selector)
-- [yaml print <selector>](#yaml-print-selector)
-  - [yaml set "<selector>: value"](#yaml-set-%22selector-value%22)
-  - [yaml default "<selector>: value"](#yaml-default-%22selector-value%22)
-  - [yaml delete <selector>](#yaml-delete-selector)
+- [yaml get selector](#yaml-get-selector)
+- [yaml print selector](#yaml-print-selector)
+  - [yaml set "selector: value"](#yaml-set-%22selector-value%22)
+  - [yaml default "selector: value"](#yaml-default-%22selector-value%22)
+  - [yaml delete selector](#yaml-delete-selector)
   - [yaml cat file1.yml file2.yml fileN.yml](#yaml-cat-file1yml-file2yml-filenyml)
-  - [yaml count <selector>](#yaml-count-selector)
+  - [yaml count selector](#yaml-count-selector)
 - [Transformation files](#transformation-files)
   - [yaml apply file1.yt file2.yt fileN.yt](#yaml-apply-file1yt-file2yt-filenyt)
     - [Examples of transformation YAML files](#examples-of-transformation-yaml-files)
 - [Print selected YAML nodes](#print-selected-yaml-nodes)
-  - [yaml get <selector>](#yaml-get-selector-1)
+  - [yaml get selector](#yaml-get-selector-1)
     - [kubectl - print pod's main container image](#kubectl---print-pods-main-container-image)
 - [Grep documents/objects](#grep-documentsobjects)
-  - [yaml grep "<selector>: value" ...](#yaml-grep-%22selector-value%22)
+  - [yaml grep "selector: value" ...](#yaml-grep-%22selector-value%22)
     - [Grep k8s deployment object by name](#grep-k8s-deployment-object-by-name)
-  - [yaml grep -v "<selector>: value" ...](#yaml-grep--v-%22selector-value%22)
+  - [yaml grep -v "selector: value" ...](#yaml-grep--v-%22selector-value%22)
     - [Grep all k8s objects that don't create Pods](#grep-all-k8s-objects-that-dont-create-pods)
     - [Print first container's image of linkerd2 deployment objects](#print-first-containers-image-of-linkerd2-deployment-objects)
 - [Useful Kubernetes examples](#useful-kubernetes-examples)
@@ -34,14 +34,14 @@ A CLI tool for querying and transforming YAML data: Grep matching objects, join 
 
 # One-liner commands
 
-# yaml get <selector>
+# yaml get selector
 Get value of a node matching the given selector.
 ```bash
 $ kubectl get pod/nats-8576dfb67-vg6v7 -o yaml | yaml get spec.containers[0].image
 nats-streaming:0.10.0
 ```
 
-# yaml print <selector>
+# yaml print selector
 Print full node matching the given selector.
 ```bash
 $ kubectl get pod/nats-8576dfb67-vg6v7 -o yaml | yaml print kind apiVersion metadata.annotations
@@ -51,19 +51,19 @@ metadata.annotations:
   kubernetes.io/psp: eks.privileged
 ```
 
-## yaml set "<selector>: value"
+## yaml set "selector: value"
 Add/overwrite field's value.
 ```bash
 $ cat input.yml | yaml set "metadata.labels.environment: staging" > output.yml
 ```
 
-## yaml default "<selector>: value"
+## yaml default "selector: value"
 Set field's value, if no such value exists yet.
 ```bash
 $ cat input.yml | yaml default "metadata.labels.environment: staging" > output.yml
 ```
 
-## yaml delete <selector>
+## yaml delete selector
 Delete specific field.
 ```bash
 $ cat input.yml | yaml delete "metadata.labels.environment" > output.yml
@@ -75,7 +75,7 @@ Join multiple YAML files into a single file with multiple documents separated by
 $ yaml cat k8s-apps/*.yml > output.yml
 ```
 
-## yaml count <selector>
+## yaml count selector
 Print number of items within an array matching the given selector. Useful for ranging over arrays.
 ```bash
 pods=$(kubectl get pods -o yaml)
@@ -183,7 +183,7 @@ set:
 ```
 
 # Print selected YAML nodes
-## yaml get <selector>
+## yaml get selector
 ### kubectl - print pod's main container image
 ```bash
 $ kubectl get pods/nats-8576dfb67-vg6v7 -o yaml | yaml get spec.containers[0].image
@@ -195,13 +195,13 @@ Grep documents/objects matching all of the given `selector: value` pairs.
 
 If a provided value is an array (ie. `selector: [first, second]`), the matching value must match at least one of the provided values (logical "OR").
 
-## yaml grep "<selector>: value" ...
+## yaml grep "selector: value" ...
 ### Grep k8s deployment object by name
 ```bash
 $ cat desired-state.yml | yaml grep "kind: Deployment" "metadata.name: linkerd"
 ```
 
-## yaml grep -v "<selector>: value" ...
+## yaml grep -v "selector: value" ...
 ### Grep all k8s objects that don't create Pods
 ```bash
 $ cat desired-state.yml | yaml grep -v "kind: [Deployment, Pod, Job, ReplicaSet, ReplicationController]"
