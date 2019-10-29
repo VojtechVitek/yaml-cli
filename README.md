@@ -12,7 +12,9 @@ A CLI tool for querying and transforming YAML data: Grep matching objects, join 
   - [yaml default "selector: value"](#yaml-default-%22selector-value%22)
   - [yaml delete selector](#yaml-delete-selector)
   - [yaml cat file1.yml file2.yml fileN.yml](#yaml-cat-file1yml-file2yml-filenyml)
-  - [yaml count selector](#yaml-count-selector)
+  - [yaml count](#yaml-count)
+  - [yaml doc $index](#yaml-doc-index)
+  - [yaml len arraySelector](#yaml-len-arrayselector)
 - [Grep YAML documents (objects)](#grep-yaml-documents-objects)
   - [yaml grep "selector: value" ...](#yaml-grep-%22selector-value%22)
     - [Grep k8s deployment object by name](#grep-k8s-deployment-object-by-name)
@@ -72,11 +74,43 @@ Join multiple YAML files into a single file with multiple documents separated by
 $ yaml cat k8s-apps/*.yml > output.yml
 ```
 
-## yaml count selector
-Print number of items within an array matching the given selector. Useful for ranging over arrays.
+## yaml count
+Print number of YAML documents within the input YAML stream.
+
+input.yml
+```yml
+document: this is doc 1
+---
+document: this is doc 2
+```
+
+```bash
+$ yaml count input.yml
+2
+```
+
+## yaml doc $index
+Print Nth (index=0..N-1) YAML document from the input YAML stream.
+
+input.yml
+```yml
+document: this is doc 1
+---
+document: this is doc 2
+```
+
+```bash
+$ yaml doc 1
+document: this is doc 2
+```
+
+## yaml len arraySelector
+Print number of items within an array matching the given selector.
+
+Useful for ranging over arrays.
 ```bash
 pods=$(kubectl get pods -o yaml)
-count=$(echo "$pods" | yaml count items)
+count=$(echo "$pods" | yaml len items)
 for ((i=0; i < $count; i++)); do
     echo "$pods" | yaml get items[$i].status.phase
 done
