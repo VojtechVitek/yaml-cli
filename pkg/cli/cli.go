@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/VojtechVitek/yaml"
@@ -15,8 +16,25 @@ import (
 )
 
 func Run(out io.Writer, in io.Reader, args []string) error {
+	if len(args) == 2 && args[1] == "count" {
+		count := 0
+		dec := yamlv3.NewDecoder(in)
+		for { // For all YAML documents in STDIN.
+			var doc yamlv3.Node
+			if err := dec.Decode(&doc); err != nil {
+				if err == io.EOF { // Last document.
+					break
+				}
+				return errors.Wrap(err, "failed to decode YAML document(s) from stdin")
+			}
+			count++
+		}
+		fmt.Println(count)
+		return nil
+	}
+
 	if len(args) <= 2 {
-		return errors.New("usage: yaml apply [files..]")
+		return errors.New(`usage: see https://github.com/VojtechVitek/yaml-cli/blob/master/README.md`)
 	}
 
 	enc := yamlv3.NewEncoder(out)
@@ -40,7 +58,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 				}
 
 				if err := enc.Encode(&doc); err != nil {
-					return errors.Wrap(err, "failed to write to encode node")
+					return errors.Wrap(err, "failed to encode YAML node")
 				}
 			}
 
@@ -82,6 +100,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 		for _, tf := range fileTfs {
 			tfs = append(tfs, tf...)
 		}
+		// do not return
 
 	case "to":
 		b, err := ioutil.ReadAll(os.Stdin)
@@ -107,8 +126,37 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 		default:
 			return fmt.Errorf("unknown format %q", format)
 		}
-
 		return nil
+
+	case "doc":
+		if len(args) != 3 {
+			return errors.New("usage: yaml doc $index")
+		}
+
+		index, err := strconv.Atoi(args[2])
+		if err != nil {
+			return errors.Wrapf(err, "yaml doc $index: failed to parse $index %q", args[2])
+		}
+
+		count := 0
+		dec := yamlv3.NewDecoder(in)
+		for { // For all YAML documents in STDIN.
+			var doc yamlv3.Node
+			if err := dec.Decode(&doc); err != nil {
+				if err == io.EOF { // Last document.
+					break
+				}
+				return errors.Wrap(err, "failed to decode YAML document(s) from stdin")
+			}
+			if count == index {
+				if err := enc.Encode(&doc); err != nil {
+					return errors.Wrap(err, "failed to encode YAML node")
+				}
+				return nil
+			}
+			count++
+		}
+		return errors.Errorf("doc %v not found (count=%v)", index, count)
 	}
 
 	dec := yamlv3.NewDecoder(in)
@@ -130,7 +178,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			}
 
 			if err := enc.Encode(&doc); err != nil {
-				return errors.Wrap(err, "failed to write to encode node")
+				return errors.Wrap(err, "failed to encode YAML node")
 			}
 
 		case "match":
@@ -162,7 +210,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			ok, _ := tf.MustMatchAll(&doc)
 			if ok != invert { // match
 				if err := enc.Encode(&doc); err != nil {
-					return errors.Wrap(err, "failed to write to encode node")
+					return errors.Wrap(err, "failed to encode YAML node")
 				}
 			}
 
@@ -188,10 +236,10 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			}
 
 			if err := enc.Encode(obj); err != nil {
-				return errors.Wrap(err, "failed to write to encode node")
+				return errors.Wrap(err, "failed to encode YAML node")
 			}
 
-		case "count":
+		case "len":
 			selector := args[2]
 
 			node, err := yaml.Get(&doc, selector)
@@ -214,7 +262,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 				enc = yamlv3.NewEncoder(out)
 				enc.SetIndent(2)
 				if err := enc.Encode(node); err != nil {
-					return errors.Wrap(err, "failed to write to encode node")
+					return errors.Wrap(err, "failed to encode YAML node")
 				}
 			}
 
@@ -232,7 +280,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			}
 
 			if err := enc.Encode(&doc); err != nil {
-				return errors.Wrap(err, "failed to write to encode node")
+				return errors.Wrap(err, "failed to encode YAML node")
 			}
 
 		case "default":
@@ -249,7 +297,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			}
 
 			if err := enc.Encode(&doc); err != nil {
-				return errors.Wrap(err, "failed to write to encode node")
+				return errors.Wrap(err, "failed to encode YAML node")
 			}
 
 		case "delete":
