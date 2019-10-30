@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/VojtechVitek/yaml/pkg/cli"
+	"github.com/VojtechVitek/yaml-cli/pkg/cli"
 )
 
 func main() {
