@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/VojtechVitek/yaml"
+	"github.com/VojtechVitek/yaml-cli"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 	yamlv3 "gopkg.in/yaml.v3"
