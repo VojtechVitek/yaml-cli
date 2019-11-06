@@ -228,6 +228,8 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 
 		case "get":
 			for _, selector := range args[1:] {
+				// TODO: Get() []node .... get array[*]
+				// TODO: encode each node in a loop
 				node, err := yaml.Get(&doc, selector)
 				if err != nil {
 					return errors.Wrapf(err, "failed to get %q", selector)

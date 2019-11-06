@@ -25,6 +25,9 @@ A CLI tool for querying and transforming YAML data: Grep matching objects, join 
     - [Push all non-pod objects to k8s](#push-all-non-pod-objects-to-k8s)
     - [Rollout k8s deployments from desired-state files sequentially](#rollout-k8s-deployments-from-desired-state-files-sequentially)
 - [Known issues](#known-issues)
+- [Working with JSON](#working-with-json)
+  - [JSON to YAML](#json-to-yaml)
+  - [YAML to JSON](#yaml-to-json)
 - [Transformation files](#transformation-files)
   - [yaml apply file1.yt file2.yt fileN.yt](#yaml-apply-file1yt-file2yt-filenyt)
     - [Examples of transformation YAML files](#examples-of-transformation-yaml-files)
@@ -213,6 +216,17 @@ set:
     metadata.annotations."rbac.authorization.kubernetes.io/autoupdate": true
 ```
 
+# Working with JSON
+
+## JSON to YAML
+```
+$ cat file.json | yaml --from=json grep 'kind: Pod'
+```
+
+## YAML to JSON
+```
+$ cat file.yml | yaml grep 'kind: Pod' --to=json
+```
 
 # Transformation files
 
