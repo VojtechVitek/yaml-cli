@@ -36,16 +36,31 @@ A CLI tool for querying and transforming YAML data: Grep matching objects, join 
 # One-liner commands
 
 ## yaml get selector
-Get value of a node matching the given selector.
+Print value of a YAML node matching the given selector.
 ```bash
 $ kubectl get pod/nats-8576dfb67-vg6v7 -o yaml | yaml get spec.containers[0].image
 nats-streaming:0.10.0
 ```
 
+Since we're printing a value, the output might not necesarilly be a valid YAML.
+
+If we're printing value of a primitive type (ie. string) and we need the output in a valid YAML format, so it can be processed further, we can explicitly print the node key in front of the value:
+
 ```bash
 $ kubectl get pod/nats-8576dfb67-vg6v7 -o yaml | yaml get spec.containers[0].image --print-key
 image: nats-streaming:0.10.0
 ```
+
+We can print multiple values, and they will be printed as separate objects:
+
+```bash
+$ kubectl get pod/nats-8576dfb67-vg6v7 -o yaml | yaml get spec.containers[0].image spec.containers[1].image --print-key
+image: nats-streaming:0.10.0
+---
+image: sidecar:1.0.1
+```
+
+We can print all array items at once with a wildcard (`array[*]`) too:
 
 ```bash
 $ kubectl get pod/nats-8576dfb67-vg6v7 -o yaml | yaml get spec.containers[*].image --print-key
@@ -54,10 +69,12 @@ image: nats-streaming:0.10.0
 image: sidecar:1.0.1
 ```
 
+Need to get list of values only?
+
 ```bash
-$ kubectl get pod/nats-8576dfb67-vg6v7 -o yaml | yaml get spec.containers[*].image --print-key --no-separator
-image: nats-streaming:0.10.0
-image: sidecar:1.0.1
+$ kubectl get pod/nats-8576dfb67-vg6v7 -o yaml | yaml get spec.containers[*].image --no-separator
+nats-streaming:0.10.0
+sidecar:1.0.1
 ```
 
 ## yaml set "selector: value"

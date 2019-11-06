@@ -22,8 +22,9 @@ var (
 	flags       = flag.NewFlagSet("yaml", flag.ExitOnError)
 	from        = flags.String("from", "yaml", "input data format [json]")
 	to          = flags.String("to", "yaml", "output data format [json]")
-	printKey    = flags.Bool("print-key", false, "yaml get: print node key in front of the value")
+	printKey    = flags.Bool("print-key", false, "yaml get: print node key in front of the value, so the output is valid YAML")
 	noSeparator = flags.Bool("no-separator", false, "yaml get: don't print `---' separator between YAML documents")
+	invert      = flags.BoolP("invert-match", "v", false, "yaml grep -v: select non-matching documents")
 )
 
 // TODO: Split into multiple files/functions. This function grew too much
@@ -208,22 +209,15 @@ func run(out io.Writer, in io.Reader, args []string) error {
 		case "grep":
 			selectors := args[1:]
 
-			// yaml grep -v "something"
-			invert := false
-			if selectors[0] == "-v" {
-				invert = true
-				selectors = selectors[1:]
-			}
-
 			tfs, err := yaml.Transformations(strings.NewReader(fmt.Sprintf("match:\n  %v", strings.Join(selectors, "\n  "))))
 			if err != nil {
 				return errors.Wrapf(err, "failed to parse grep `key: value' pairs from %q", selectors)
 			}
 			tf := tfs[0]
 
-			ok, err := tf.MustMatchAll(&doc)
-			fmt.Fprintf(os.Stderr, "MustMatchAll: %v\n", err)
-			if ok != invert { // match
+			ok, _ := tf.MustMatchAll(&doc)
+			//fmt.Fprintf(os.Stderr, "MustMatchAll: %v\n", err)
+			if ok != *invert { // match
 				if err := enc.Encode(&doc); err != nil {
 					return errors.Wrap(err, "failed to encode YAML node")
 				}
@@ -252,10 +246,10 @@ func run(out io.Writer, in io.Reader, args []string) error {
 					return errors.Wrapf(err, "failed to get %q", selector)
 				}
 
-				// Don't reuse top level encoder; we don't want to render
-				// multiple YAML documents separated by `---`.
-				enc = yamlv3.NewEncoder(out)
-				enc.SetIndent(2)
+				// // Don't reuse top level encoder; we don't want to render
+				// // multiple YAML documents separated by `---`.
+				// enc = yamlv3.NewEncoder(out)
+				// enc.SetIndent(2)
 				for _, node := range nodes {
 					if *printKey {
 						node = &yamlv3.Node{
