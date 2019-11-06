@@ -30,29 +30,29 @@ foo:
 
 	tt := []*cliTestCase{
 		{
-			in:  fooYAML,
-			cmd: []string{"yaml", "grep", "foo: bar"},
-			out: "foo: bar\n",
+			in:   fooYAML,
+			args: []string{"grep", "foo: bar"},
+			out:  "foo: bar\n",
 		},
 		{
-			in:  fooYAML,
-			cmd: []string{"yaml", "grep", "foo: [bar, baz]"},
-			out: "foo: bar\n---\nfoo: baz\n",
+			in:   fooYAML,
+			args: []string{"grep", "foo: [bar, baz]"},
+			out:  "foo: bar\n---\nfoo: baz\n",
 		},
 		{
-			in:  fooYAML,
-			cmd: []string{"yaml", "grep", "doesnt: exist"},
-			out: "",
+			in:   fooYAML,
+			args: []string{"grep", "doesnt: exist"},
+			out:  "",
 		},
 		{
-			in:  fmt.Sprintf("foo: bar\n---\nfoo: baz\n---\nfoo: x"),
-			cmd: []string{"yaml", "grep", "foo: [bar, baz]"},
-			out: fmt.Sprintf("foo: bar\n---\nfoo: baz\n"),
+			in:   fmt.Sprintf("foo: bar\n---\nfoo: baz\n---\nfoo: x"),
+			args: []string{"grep", "foo: [bar, baz]"},
+			out:  fmt.Sprintf("foo: bar\n---\nfoo: baz\n"),
 		},
 		{
-			in:  fmt.Sprintf("foo: bar\n---\nfoo: baz\n---\nfoo: x"),
-			cmd: []string{"yaml", "grep", "-v", "foo: [bar, baz]"},
-			out: fmt.Sprintf("foo: x\n"),
+			in:   fmt.Sprintf("foo: bar\n---\nfoo: baz\n---\nfoo: x"),
+			args: []string{"grep", "-v", "foo: [bar, baz]"},
+			out:  fmt.Sprintf("foo: x\n"),
 		},
 	}
 

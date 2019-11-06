@@ -11,10 +11,10 @@ import (
 )
 
 type cliTestCase struct {
-	in  string
-	cmd []string
-	out string
-	err bool
+	in   string
+	args []string
+	out  string
+	err  bool
 }
 
 func (tc *cliTestCase) runTest(t *testing.T) {
@@ -22,15 +22,15 @@ func (tc *cliTestCase) runTest(t *testing.T) {
 
 	var b bytes.Buffer
 
-	err := cli.Run(&b, strings.NewReader(tc.in), tc.cmd)
+	err := cli.Run(&b, strings.NewReader(tc.in), tc.args)
 	if err != nil && !tc.err {
-		t.Errorf("%#v: %v", tc.cmd, err)
+		t.Errorf("%#v: %v", tc.args, err)
 	} else if err == nil && tc.err {
-		t.Errorf("%#v: expected error", tc.cmd)
+		t.Errorf("%#v: expected error", tc.args)
 	}
 
 	if diff := cmp.Diff(tc.out, b.String()); diff != "" {
-		t.Errorf("%#v mismatch (-want +got):\n%s", tc.cmd, diff)
+		t.Errorf("%#v mismatch (-want +got):\n%s", tc.args, diff)
 	}
 }
 

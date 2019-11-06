@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -15,8 +14,10 @@ import (
 	yamlv3 "gopkg.in/yaml.v3"
 )
 
+// TODO: Split into multiple files/functions. This function grew too much
+//       over time while adding new commands and functionality.
 func Run(out io.Writer, in io.Reader, args []string) error {
-	if len(args) == 2 && args[1] == "count" {
+	if len(args) == 1 && args[0] == "count" {
 		count := 0
 		dec := yamlv3.NewDecoder(in)
 		for { // For all YAML documents in STDIN.
@@ -33,15 +34,15 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 		return nil
 	}
 
-	if len(args) <= 2 {
+	if len(args) <= 1 {
 		return errors.New(`usage: see https://github.com/VojtechVitek/yaml-cli/blob/master/README.md`)
 	}
 
 	enc := yamlv3.NewEncoder(out)
 	enc.SetIndent(2)
 
-	if args[1] == "cat" {
-		for _, filename := range args[2:] {
+	if args[0] == "cat" {
+		for _, filename := range args[1:] {
 			f, err := os.Open(filename)
 			if err != nil {
 				return errors.Wrap(err, "failed to open file")
@@ -71,9 +72,9 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 
 	var tfs []*yaml.Transformation
 
-	switch args[1] {
+	switch args[0] {
 	case "apply":
-		filenames := args[2:]
+		filenames := args[1:]
 
 		fileTfs := make([][]*yaml.Transformation, len(filenames))
 
@@ -102,40 +103,14 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 		}
 		// do not return
 
-	case "to":
-		b, err := ioutil.ReadAll(os.Stdin)
-		if err != nil {
-			return errors.Wrap(err, "failed to read YAML data")
-		}
-		var data map[interface{}]interface{}
-		if err := yamlv3.Unmarshal(b, &data); err != nil {
-			return errors.Wrap(err, "failed to unmarshal YAML data")
-		}
-
-		jsonCompatibleData := convertMap(data)
-
-		format := args[2]
-		switch format {
-		case "json":
-			b, err := json.MarshalIndent(jsonCompatibleData, "", "  ")
-			if err != nil {
-				return errors.Wrap(err, "failed to marshal to JSON")
-			}
-			os.Stdout.Write(b)
-
-		default:
-			return fmt.Errorf("unknown format %q", format)
-		}
-		return nil
-
 	case "doc":
-		if len(args) != 3 {
+		if len(args) != 2 {
 			return errors.New("usage: yaml doc $index")
 		}
 
-		index, err := strconv.Atoi(args[2])
+		index, err := strconv.Atoi(args[1])
 		if err != nil {
-			return errors.Wrapf(err, "yaml doc $index: failed to parse $index %q", args[2])
+			return errors.Wrapf(err, "yaml doc $index: failed to parse $index %q", args[1])
 		}
 
 		count := 0
@@ -170,7 +145,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			return errors.Wrap(err, "failed to decode YAML document(s) from stdin")
 		}
 
-		switch args[1] {
+		switch args[0] {
 		case "apply":
 			for _, tf := range tfs {
 				if err := tf.Apply(&doc); err != nil {
@@ -183,7 +158,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			}
 
 		case "match":
-			for _, selector := range args[2:] {
+			for _, selector := range args[1:] {
 				_, err := yaml.Get(&doc, selector)
 				if err != nil {
 					return errors.Wrapf(err, "failed to get %q", selector)
@@ -193,7 +168,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			return nil
 
 		case "grep":
-			selectors := args[2:]
+			selectors := args[1:]
 
 			// yaml grep -v "something"
 			invert := false
@@ -221,7 +196,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 				Tag:  "!!map",
 			}
 
-			for _, selector := range args[2:] {
+			for _, selector := range args[1:] {
 				node, err := yaml.Get(&doc, selector)
 				if err != nil {
 					return errors.Wrapf(err, "failed to get %q", selector)
@@ -241,7 +216,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			}
 
 		case "len":
-			selector := args[2]
+			selector := args[1]
 
 			node, err := yaml.Get(&doc, selector)
 			if err != nil {
@@ -252,7 +227,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			return nil
 
 		case "get":
-			for _, selector := range args[2:] {
+			for _, selector := range args[1:] {
 				node, err := yaml.Get(&doc, selector)
 				if err != nil {
 					return errors.Wrapf(err, "failed to get %q", selector)
@@ -268,7 +243,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			}
 
 		case "set":
-			keyValues := args[2:]
+			keyValues := args[1:]
 
 			tfs, err := yaml.Transformations(strings.NewReader(fmt.Sprintf("set:\n  %v", strings.Join(keyValues, "\n  "))))
 			if err != nil {
@@ -285,7 +260,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			}
 
 		case "default":
-			keyValues := args[2:]
+			keyValues := args[1:]
 
 			tfs, err := yaml.Transformations(strings.NewReader(fmt.Sprintf("default:\n  %v", strings.Join(keyValues, "\n  "))))
 			if err != nil {
@@ -302,7 +277,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			}
 
 		case "delete":
-			selector := args[2]
+			selector := args[1]
 
 			if err := yaml.Delete(&doc, selector); err != nil {
 				if false { // TODO: --strict mode, where we'd error out on non-existent selectors?
@@ -311,7 +286,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			}
 
 		default:
-			return errors.Errorf("%v: unknown command", args[1])
+			return errors.Errorf("%v: unknown command", args[0])
 		}
 	}
 
