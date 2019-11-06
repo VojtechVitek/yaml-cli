@@ -159,7 +159,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 
 		case "match":
 			for _, selector := range args[1:] {
-				_, err := yaml.Get(&doc, selector)
+				_, err := yaml.Get(&doc, strings.Split(selector, "."))
 				if err != nil {
 					return errors.Wrapf(err, "failed to get %q", selector)
 				}
@@ -197,7 +197,9 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			}
 
 			for _, selector := range args[1:] {
-				node, err := yaml.Get(&doc, selector)
+				paths := strings.Split(selector, ".")
+
+				node, err := yaml.Get(&doc, paths)
 				if err != nil {
 					return errors.Wrapf(err, "failed to get %q", selector)
 				}
@@ -205,7 +207,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 				obj.Content = append(obj.Content,
 					&yamlv3.Node{
 						Kind:  yamlv3.ScalarNode,
-						Value: selector,
+						Value: paths[len(paths)-1],
 					},
 					node,
 				)
@@ -218,7 +220,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 		case "len":
 			selector := args[1]
 
-			node, err := yaml.Get(&doc, selector)
+			node, err := yaml.Get(&doc, strings.Split(selector, "."))
 			if err != nil {
 				return errors.Wrapf(err, "failed to get %q", selector)
 			}
@@ -230,7 +232,7 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			for _, selector := range args[1:] {
 				// TODO: Get() []node .... get array[*]
 				// TODO: encode each node in a loop
-				node, err := yaml.Get(&doc, selector)
+				node, err := yaml.Get(&doc, strings.Split(selector, "."))
 				if err != nil {
 					return errors.Wrapf(err, "failed to get %q", selector)
 				}
