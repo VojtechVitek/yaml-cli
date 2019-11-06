@@ -1,6 +1,8 @@
 package yaml
 
 import (
+	"fmt"
+	"os"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -8,15 +10,19 @@ import (
 )
 
 func (t *Transformation) MustMatchAll(doc *yaml.Node) (bool, error) {
+	fmt.Fprintf(os.Stderr, "MustMatchAll: %v\n", t.Matches)
+
 	for path, want := range t.Matches {
 		selectors := strings.Split(path, ".")
-		got, err := findNode(doc.Content[0], selectors, false)
+		gotNodes, err := findNodes(doc.Content[0], selectors, false)
 		if err != nil {
 			return false, errors.Wrapf(err, "failed to match %q", path)
 		}
 
-		if err := match(&want, got); err != nil {
-			return false, errors.Wrapf(err, "failed to match %q", path)
+		for _, gotNode := range gotNodes {
+			if err := match(&want, gotNode); err != nil {
+				return false, errors.Wrapf(err, "failed to match %q (line: %v, column: %v)", path, gotNode.Line, gotNode.Column)
+			}
 		}
 	}
 

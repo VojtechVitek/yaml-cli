@@ -1,22 +1,70 @@
 package cli
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/VojtechVitek/yaml"
 	"github.com/pkg/errors"
+	flag "github.com/spf13/pflag"
 	"golang.org/x/sync/errgroup"
 	yamlv3 "gopkg.in/yaml.v3"
+)
+
+var (
+	// TODO: Move these vars to a struct, they shouldn't be global. A left-over from "main" pkg.
+	flags       = flag.NewFlagSet("yaml", flag.ExitOnError)
+	from        = flags.String("from", "yaml", "input data format [json]")
+	to          = flags.String("to", "yaml", "output data format [json]")
+	printKey    = flags.Bool("print-key", false, "yaml get: print node key in front of the value")
+	noSeparator = flags.Bool("no-separator", false, "yaml get: don't print `---' separator between YAML documents")
 )
 
 // TODO: Split into multiple files/functions. This function grew too much
 //       over time while adding new commands and functionality.
 func Run(out io.Writer, in io.Reader, args []string) error {
+	var b bytes.Buffer
+	flags.Parse(args)
+
+	switch *from {
+	case "yaml", "yml": // Nop.
+	case "json":
+		in = &b
+		if err := jsonToYAML(&b, os.Stdin); err != nil {
+			log.Fatal(errors.Wrap(err, "failed to convert output to JSON"))
+		}
+	default:
+		return errors.Errorf("unknown --from format %q", *to)
+	}
+
+	switch *to {
+	case "yaml", "yml": // Nop.
+	case "json":
+		out = &b
+	default:
+		return errors.Errorf("unknown --to format %q", *to)
+	}
+
+	if err := run(out, in, flags.Args()); err != nil {
+		return errors.Wrap(err, "failed to run")
+	}
+
+	if *to == "json" {
+		if err := yamlToJSON(os.Stdout, &b); err != nil {
+			return errors.Wrap(err, "failed to convert output to JSON")
+		}
+	}
+
+	return nil
+}
+
+func run(out io.Writer, in io.Reader, args []string) error {
 	if len(args) == 1 && args[0] == "count" {
 		count := 0
 		dec := yamlv3.NewDecoder(in)
@@ -157,16 +205,6 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 				return errors.Wrap(err, "failed to encode YAML node")
 			}
 
-		case "match":
-			for _, selector := range args[1:] {
-				_, err := yaml.Get(&doc, strings.Split(selector, "."))
-				if err != nil {
-					return errors.Wrapf(err, "failed to get %q", selector)
-				}
-			}
-
-			return nil
-
 		case "grep":
 			selectors := args[1:]
 
@@ -183,56 +221,33 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 			}
 			tf := tfs[0]
 
-			ok, _ := tf.MustMatchAll(&doc)
+			ok, err := tf.MustMatchAll(&doc)
+			fmt.Fprintf(os.Stderr, "MustMatchAll: %v\n", err)
 			if ok != invert { // match
 				if err := enc.Encode(&doc); err != nil {
 					return errors.Wrap(err, "failed to encode YAML node")
 				}
 			}
 
-		case "print":
-			obj := &yamlv3.Node{
-				Kind: yamlv3.MappingNode,
-				Tag:  "!!map",
-			}
-
-			for _, selector := range args[1:] {
-				paths := strings.Split(selector, ".")
-
-				node, err := yaml.Get(&doc, paths)
-				if err != nil {
-					return errors.Wrapf(err, "failed to get %q", selector)
-				}
-
-				obj.Content = append(obj.Content,
-					&yamlv3.Node{
-						Kind:  yamlv3.ScalarNode,
-						Value: paths[len(paths)-1],
-					},
-					node,
-				)
-			}
-
-			if err := enc.Encode(obj); err != nil {
-				return errors.Wrap(err, "failed to encode YAML node")
-			}
-
 		case "len":
 			selector := args[1]
 
-			node, err := yaml.Get(&doc, strings.Split(selector, "."))
+			nodes, err := yaml.Get(&doc, strings.Split(selector, "."))
 			if err != nil {
 				return errors.Wrapf(err, "failed to get %q", selector)
 			}
 
-			fmt.Println(len(node.Content))
+			for _, node := range nodes {
+				fmt.Println(len(node.Content))
+			}
 			return nil
 
 		case "get":
 			for _, selector := range args[1:] {
-				// TODO: Get() []node .... get array[*]
-				// TODO: encode each node in a loop
-				node, err := yaml.Get(&doc, strings.Split(selector, "."))
+				selectors := strings.Split(selector, ".")
+				lastSelector := selectors[len(selectors)-1]
+
+				nodes, err := yaml.Get(&doc, selectors)
 				if err != nil {
 					return errors.Wrapf(err, "failed to get %q", selector)
 				}
@@ -241,8 +256,28 @@ func Run(out io.Writer, in io.Reader, args []string) error {
 				// multiple YAML documents separated by `---`.
 				enc = yamlv3.NewEncoder(out)
 				enc.SetIndent(2)
-				if err := enc.Encode(node); err != nil {
-					return errors.Wrap(err, "failed to encode YAML node")
+				for _, node := range nodes {
+					if *printKey {
+						node = &yamlv3.Node{
+							Kind: yamlv3.MappingNode,
+							Tag:  "!!map",
+							Content: []*yamlv3.Node{
+								&yamlv3.Node{
+									Kind:  yamlv3.ScalarNode,
+									Value: lastSelector,
+								},
+								node,
+							},
+						}
+					}
+
+					if *noSeparator {
+						enc = yamlv3.NewEncoder(out)
+						enc.SetIndent(2)
+					}
+					if err := enc.Encode(node); err != nil {
+						return errors.Wrap(err, "failed to encode YAML node")
+					}
 				}
 			}
 

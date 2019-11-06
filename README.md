@@ -7,7 +7,6 @@ A CLI tool for querying and transforming YAML data: Grep matching objects, join 
 
 - [One-liner commands](#one-liner-commands)
   - [yaml get selector](#yaml-get-selector)
-  - [yaml print selector](#yaml-print-selector)
   - [yaml set "selector: value"](#yaml-set-%22selector-value%22)
   - [yaml default "selector: value"](#yaml-default-%22selector-value%22)
   - [yaml delete selector](#yaml-delete-selector)
@@ -43,14 +42,22 @@ $ kubectl get pod/nats-8576dfb67-vg6v7 -o yaml | yaml get spec.containers[0].ima
 nats-streaming:0.10.0
 ```
 
-## yaml print selector
-Print full node matching the given selector.
 ```bash
-$ kubectl get pod/nats-8576dfb67-vg6v7 -o yaml | yaml print kind apiVersion metadata.annotations
-kind: Pod
-apiVersion: v1
-metadata.annotations:
-  kubernetes.io/psp: eks.privileged
+$ kubectl get pod/nats-8576dfb67-vg6v7 -o yaml | yaml get spec.containers[0].image --print-key
+image: nats-streaming:0.10.0
+```
+
+```bash
+$ kubectl get pod/nats-8576dfb67-vg6v7 -o yaml | yaml get spec.containers[*].image --print-key
+image: nats-streaming:0.10.0
+---
+image: sidecar:1.0.1
+```
+
+```bash
+$ kubectl get pod/nats-8576dfb67-vg6v7 -o yaml | yaml get spec.containers[*].image --print-key --no-separator
+image: nats-streaming:0.10.0
+image: sidecar:1.0.1
 ```
 
 ## yaml set "selector: value"

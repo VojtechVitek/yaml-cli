@@ -8,38 +8,61 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func findNode(node *yaml.Node, selectors []string, create bool) (*yaml.Node, error) {
+func findNodes(node *yaml.Node, selectors []string, create bool) ([]*yaml.Node, error) {
+	var nodes []*yaml.Node
 	currentSelector := selectors[0]
 
-	// array[N] selectors.
+	// array[N] or array[*] selectors.
 	if i := strings.LastIndex(currentSelector, "["); i > 0 && strings.HasSuffix(currentSelector, "]") {
 		arrayIndex := currentSelector[i+1 : len(currentSelector)-1]
 		currentSelector = currentSelector[:i]
 
-		// TODO: Can we do array[*], ie. set value in each array item?
 		index, err := strconv.Atoi(arrayIndex)
 		if err != nil {
-			return nil, errors.Wrapf(err, "can't parse array index from %v[%v]", currentSelector, arrayIndex)
+			if arrayIndex == "*" {
+				index = -1
+			} else {
+				return nil, errors.Wrapf(err, "can't parse array index from %v[%v]", currentSelector, arrayIndex)
+			}
+		} else if index < 0 {
+			return nil, errors.Wrapf(err, "array index can't be negative %v[%v]", currentSelector, arrayIndex)
 		}
 
-		// Go into an array.
-		node, err = findNode(node, []string{currentSelector}, create)
+		// Go into array node(s).
+		arrayNodes, err := findNodes(node, []string{currentSelector}, create)
 		if err != nil {
 			return nil, errors.Errorf("can't find %v", currentSelector)
 		}
+		for _, arrayNode := range arrayNodes {
+			if arrayNode.Kind != yaml.SequenceNode {
+				return nil, errors.Errorf("%v is not an array", currentSelector)
+			}
+			if index >= len(arrayNode.Content) {
+				return nil, errors.Errorf("%v array doesn't have index %v", currentSelector, index)
+			}
 
-		if node.Kind != yaml.SequenceNode {
-			return nil, errors.Errorf("%v is not an array", currentSelector)
-		}
+			var visitArrayNodes []*yaml.Node
+			if index >= 0 { // array[N]
+				visitArrayNodes = []*yaml.Node{arrayNode.Content[index]}
+			} else { // array[*]
+				visitArrayNodes = arrayNode.Content
+			}
 
-		if index >= len(node.Content) {
-			return nil, errors.Errorf("%v array doesn't have index %v", currentSelector, index)
+			for i, node := range visitArrayNodes {
+				if len(selectors) == 1 {
+					// Last selector, use this as final node.
+					nodes = append(nodes, node)
+				} else {
+					// Go deeper into a specific array.
+					deeperNodes, err := findNodes(node, selectors[1:], create)
+					if err != nil {
+						return nil, errors.Wrapf(err, "failed to go deeper into %v[%v]", currentSelector, i)
+					}
+					nodes = append(nodes, deeperNodes...)
+				}
+			}
 		}
-
-		if len(selectors) == 1 { // Last selector.
-			return node.Content[index], nil
-		}
-		return findNode(node.Content[index], selectors[1:], create)
+		return nodes, nil
 	}
 
 	// Iterate over the keys (the slice is key/value pairs).
@@ -48,16 +71,16 @@ func findNode(node *yaml.Node, selectors []string, create bool) (*yaml.Node, err
 		lastSelector := len(selectors) == 1
 
 		for i := 0; i < len(node.Content); i += 2 {
-			// Does current key match the selector?
+			// Does the current key match the selector?
 			if node.Content[i].Value == currentSelector {
 				if !lastSelector {
 					// Match the rest of the selector path, ie. go deeper
 					// in to the value node.
-					return findNode(node.Content[i+1], selectors[1:], create)
+					return findNodes(node.Content[i+1], selectors[1:], create)
 				}
 
 				// Found last key, return its value.
-				return node.Content[i+1], nil
+				return []*yaml.Node{node.Content[i+1]}, nil
 			}
 		}
 
@@ -73,8 +96,11 @@ func findNode(node *yaml.Node, selectors []string, create bool) (*yaml.Node, err
 			node.Value = ""
 		}
 
+	case yaml.SequenceNode:
+		return nil, errors.Errorf("parent node is array, use [*] or [0]..[%v] instead of .%v to access its item(s) first", len(node.Content)-1, currentSelector)
+
 	default:
-		return nil, errors.Errorf("unknown node.Kind %v", node.Kind)
+		return nil, errors.Errorf("parent node is of unknown kind %v", node.Kind)
 	}
 
 	if create {
@@ -96,5 +122,5 @@ func findNode(node *yaml.Node, selectors []string, create bool) (*yaml.Node, err
 		}
 	}
 
-	return node, nil
+	return []*yaml.Node{node}, nil
 }
