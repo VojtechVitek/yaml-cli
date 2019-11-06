@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/VojtechVitek/yaml"
+	"github.com/VojtechVitek/yaml-cli"
 	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
 	"golang.org/x/sync/errgroup"
