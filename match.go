@@ -28,7 +28,7 @@ func (t *Transformation) MustMatchAll(doc *yaml.Node) (bool, error) {
 
 		re, err := regexp.Compile(regexString)
 		if err != nil {
-			return false, errors.Errorf("%q is not a valid regex, see https://github.com/google/re2/wiki/Syntax", want.Content)
+			return false, errors.Errorf("%q is not a valid regex, see https://github.com/google/re2/wiki/Syntax", regexString)
 		}
 
 		selectors := strings.Split(path, ".")
