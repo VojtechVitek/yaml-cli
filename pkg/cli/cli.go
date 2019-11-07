@@ -19,12 +19,13 @@ import (
 
 var (
 	// TODO: Move these vars to a struct, they shouldn't be global. A left-over from "main" pkg.
-	flags       = flag.NewFlagSet("yaml", flag.ExitOnError)
-	from        = flags.String("from", "yaml", "input data format [json]")
-	to          = flags.String("to", "yaml", "output data format [json]")
-	printKey    = flags.Bool("print-key", false, "yaml get: print node key in front of the value, so the output is valid YAML")
-	noSeparator = flags.Bool("no-separator", false, "yaml get: don't print `---' separator between YAML documents")
-	invert      = flags.BoolP("invert-match", "v", false, "yaml grep -v: select non-matching documents")
+	flags         = flag.NewFlagSet("yaml", flag.ExitOnError)
+	from          = flags.String("from", "yaml", "input data format [json]")
+	to            = flags.String("to", "yaml", "output data format [json]")
+	ignoreMissing = flags.Bool("ignore-missing", false, "yaml get: ignore missing nodes")
+	printKey      = flags.Bool("print-key", false, "yaml get: print node key in front of the value, so the output is valid YAML")
+	noSeparator   = flags.Bool("no-separator", false, "yaml get: don't print `---' separator between YAML documents")
+	invert        = flags.BoolP("invert-match", "v", false, "yaml grep -v: select non-matching documents")
 )
 
 // TODO: Split into multiple files/functions. This function grew too much
@@ -237,19 +238,21 @@ func run(out io.Writer, in io.Reader, args []string) error {
 			return nil
 
 		case "get":
+			useTopLevelEnc := true
+
+			var allMatchedNodes []*yamlv3.Node
+
 			for _, selector := range args[1:] {
 				selectors := strings.Split(selector, ".")
 				lastSelector := selectors[len(selectors)-1]
 
 				nodes, err := yaml.Get(&doc, selectors)
 				if err != nil {
-					return errors.Wrapf(err, "failed to get %q", selector)
+					if !*ignoreMissing {
+						return errors.Wrapf(err, "failed to get %q", selector)
+					}
 				}
 
-				// // Don't reuse top level encoder; we don't want to render
-				// // multiple YAML documents separated by `---`.
-				// enc = yamlv3.NewEncoder(out)
-				// enc.SetIndent(2)
 				for _, node := range nodes {
 					if *printKey {
 						node = &yamlv3.Node{
@@ -265,10 +268,21 @@ func run(out io.Writer, in io.Reader, args []string) error {
 						}
 					}
 
-					if *noSeparator {
-						enc = yamlv3.NewEncoder(out)
-						enc.SetIndent(2)
+					allMatchedNodes = append(allMatchedNodes, node)
+				}
+			}
+
+			for _, node := range allMatchedNodes {
+				if useTopLevelEnc {
+					useTopLevelEnc = false
+					// Top level enc will print separator between documents.
+					if err := enc.Encode(node); err != nil {
+						return errors.Wrap(err, "failed to encode YAML node")
 					}
+				} else {
+					// Omit separator between one YAML document's nodes.
+					enc := yamlv3.NewEncoder(out)
+					enc.SetIndent(2)
 					if err := enc.Encode(node); err != nil {
 						return errors.Wrap(err, "failed to encode YAML node")
 					}
