@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/VojtechVitek/yaml"
+	"github.com/VojtechVitek/yaml-cli"
 	"github.com/google/go-cmp/cmp"
 )
 
