@@ -1,9 +1,14 @@
 # Streaming YAML CLI processor <!-- omit in toc -->
-A CLI tool for querying and transforming YAML stream data: Grep matching objects, join YAML documents, get/add/edit/delete YAML nodes matching given selector, loop over objects and/or data arrays etc.
+A CLI tool for querying and transforming YAML stream data:
+- Grep matching documents (ie. K8s objects)
+- Join multiple YAML files
+- Get/add/edit/delete YAML nodes matching given selector
+- Loop over documents and/or data arrays
+- etc.
 
 `[input.yml] => [query or transformations] => [output.yml]`
 
-*Note: The input YAML data might contain multiple YAML documents separated by `---`.*
+*Note: The input YAML documents in a [YAML stream](https://yaml.org/spec/1.2/spec.html#id2801681) are separated by `---`.*
 
 - [One-liner commands](#one-liner-commands)
   - [yaml get selector](#yaml-get-selector)
