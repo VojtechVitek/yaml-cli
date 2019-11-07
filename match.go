@@ -1,6 +1,7 @@
 package yaml
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -10,10 +11,22 @@ import (
 
 func (t *Transformation) MustMatchAll(doc *yaml.Node) (bool, error) {
 	for path, want := range t.Matches {
-		if want.Kind != yaml.ScalarNode {
-			return false, errors.Errorf("TODO: Support non-scalar match values?")
+		var regexString string
+
+		switch want.Kind {
+		case yaml.ScalarNode: // Single value. Ok.
+			regexString = want.Value
+		case yaml.SequenceNode: // Obsolete syntax, ie. "kind: [Deployment, Pod]". Convert to regex.
+			var values []string
+			for _, node := range want.Content {
+				values = append(values, node.Value)
+			}
+			regexString = fmt.Sprintf("^%v$", strings.Join(values, "|"))
+		default:
+			panic(errors.Errorf("Unexpected match kind %v (expected: single value or array)", want.Kind))
 		}
-		re, err := regexp.Compile(want.Value)
+
+		re, err := regexp.Compile(regexString)
 		if err != nil {
 			return false, errors.Errorf("%q is not a valid regex, see https://github.com/google/re2/wiki/Syntax", want.Content)
 		}
