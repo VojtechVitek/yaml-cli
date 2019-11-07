@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/VojtechVitek/yaml/pkg/cli"
+	"github.com/VojtechVitek/yaml-cli/pkg/cli"
 	"github.com/google/go-cmp/cmp"
 )
 

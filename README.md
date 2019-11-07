@@ -1,12 +1,20 @@
-# YAML CLI processor <!-- omit in toc -->
-A CLI tool for querying and transforming YAML data: Grep matching objects, join YAML documents, get/add/edit/delete YAML nodes matching given selector, loop over objects and/or data arrays etc.
+# Streaming YAML CLI processor <!-- omit in toc -->
+A CLI tool for querying and transforming YAML stream data:
+- Grep matching documents (ie. K8s objects)
+- Join multiple YAML files
+- Get/add/edit/delete YAML nodes matching given selector
+- Loop over documents and/or data arrays
+- etc.
 
 `[input.yml] => [query or transformations] => [output.yml]`
 
-*Note: The input YAML data might contain multiple YAML documents separated by `---`.*
+*Note: The input YAML documents in a [YAML stream](https://yaml.org/spec/1.2/spec.html#id2801681) are separated by `---`.*
 
 - [One-liner commands](#one-liner-commands)
   - [yaml get selector](#yaml-get-selector)
+    - [yaml get selector --print-key](#yaml-get-selector---print-key)
+    - [yaml get array[*] --print-key](#yaml-get-array---print-key)
+    - [yaml get spec.containers[*].image --no-separator](#yaml-get-speccontainersimage---no-separator)
   - [yaml set "selector: value"](#yaml-set-%22selector-value%22)
   - [yaml default "selector: value"](#yaml-default-%22selector-value%22)
   - [yaml delete selector](#yaml-delete-selector)
@@ -42,6 +50,8 @@ $ kubectl get pod/nats-8576dfb67-vg6v7 -o yaml | yaml get spec.containers[0].ima
 nats-streaming:0.10.0
 ```
 
+### yaml get selector --print-key
+
 Since we're printing a value, the output might not necesarilly be a valid YAML.
 
 If we're printing value of a primitive type (ie. string) and we need the output in a valid YAML format, so it can be processed further, we can explicitly print the node key in front of the value:
@@ -60,6 +70,8 @@ image: nats-streaming:0.10.0
 image: sidecar:1.0.1
 ```
 
+### yaml get array[*] --print-key
+
 We can print all array items at once with a wildcard (`array[*]`) too:
 
 ```bash
@@ -69,7 +81,9 @@ image: nats-streaming:0.10.0
 image: sidecar:1.0.1
 ```
 
-Need to get list of values only?
+### yaml get spec.containers[*].image --no-separator
+
+Need to print values only?
 
 ```bash
 $ kubectl get pod/nats-8576dfb67-vg6v7 -o yaml | yaml get spec.containers[*].image --no-separator
