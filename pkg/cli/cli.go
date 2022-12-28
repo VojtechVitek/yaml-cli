@@ -332,6 +332,10 @@ func run(out io.Writer, in io.Reader, args []string) error {
 				}
 			}
 
+			if err := enc.Encode(&doc); err != nil {
+				return errors.Wrap(err, "failed to encode YAML node")
+			}
+
 		default:
 			return errors.Errorf("%v: unknown command", args[0])
 		}
