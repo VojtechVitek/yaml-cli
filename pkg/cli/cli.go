@@ -186,14 +186,23 @@ func run(out io.Writer, in io.Reader, args []string) error {
 	}
 
 	dec := yamlv3.NewDecoder(in)
+	firstIn := true
 	for { // For all YAML documents in STDIN.
 		var doc yamlv3.Node
 		if err := dec.Decode(&doc); err != nil {
 			if err == io.EOF { // Last document.
-				return nil
+				if !firstIn {
+					return nil
+				} else {
+					doc.Kind = yamlv3.MappingNode
+					doc.Style = yamlv3.LiteralStyle
+				}
+			} else {
+				return errors.Wrap(err, "failed to decode YAML document(s) from stdin")
 			}
-			return errors.Wrap(err, "failed to decode YAML document(s) from stdin")
 		}
+
+		firstIn = false
 
 		switch args[0] {
 		case "apply":

@@ -10,7 +10,7 @@ import (
 func Delete(doc *yaml.Node, path string) error {
 	selectors := strings.Split(path, ".")
 
-	err := deleteMatchingNode(doc.Content[0], selectors)
+	err := deleteMatchingNode(getRootNode(doc), selectors)
 	if err != nil {
 		return errors.Wrapf(err, "failed to match %q", path)
 	}

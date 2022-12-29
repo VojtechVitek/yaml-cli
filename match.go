@@ -10,6 +10,8 @@ import (
 )
 
 func (t *Transformation) MustMatchAll(doc *yaml.Node) (bool, error) {
+	root := getRootNode(doc)
+
 	for path, want := range t.Matches {
 		var regexString string
 
@@ -32,7 +34,7 @@ func (t *Transformation) MustMatchAll(doc *yaml.Node) (bool, error) {
 		}
 
 		selectors := strings.Split(path, ".")
-		gotNodes, err := findNodes(doc.Content[0], selectors, false)
+		gotNodes, err := findNodes(root, selectors, false)
 		if err != nil {
 			return false, errors.Wrapf(err, "failed to match %q", path)
 		}

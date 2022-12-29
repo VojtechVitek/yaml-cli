@@ -8,6 +8,16 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+func getRootNode(doc *yaml.Node) *yaml.Node {
+	var root *yaml.Node
+	if doc.Content == nil {
+		root = doc
+	} else {
+		root = doc.Content[0]
+	}
+	return root
+}
+
 func findNodes(node *yaml.Node, selectors []string, create bool) ([]*yaml.Node, error) {
 	var nodes []*yaml.Node
 	currentSelector := selectors[0]

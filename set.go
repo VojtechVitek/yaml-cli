@@ -24,7 +24,8 @@ func literalNodes(node *yaml.Node) {
 func Set(doc *yaml.Node, path string, value *yaml.Node) error {
 	selectors := strings.Split(path, ".")
 
-	nodes, err := findNodes(doc.Content[0], selectors, true)
+	root := getRootNode(doc)
+	nodes, err := findNodes(root, selectors, true)
 	if err != nil {
 		return errors.Wrapf(err, "failed to match %q", path)
 	}
@@ -57,7 +58,8 @@ func Set(doc *yaml.Node, path string, value *yaml.Node) error {
 func SetDefault(doc *yaml.Node, path string, value *yaml.Node) error {
 	selectors := strings.Split(path, ".")
 
-	_, err := findNodes(doc.Content[0], selectors, false)
+	root := getRootNode(doc)
+	_, err := findNodes(root, selectors, false)
 	if err == nil {
 		return nil
 	}
