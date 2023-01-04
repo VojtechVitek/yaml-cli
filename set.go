@@ -21,7 +21,7 @@ func literalNodes(node *yaml.Node) {
 	}
 }
 
-func Set(doc *yaml.Node, path string, value *yaml.Node) error {
+func Set(doc *yaml.Node, path string, value *yaml.Node, overwrite bool) error {
 	selectors := strings.Split(path, ".")
 
 	root := getRootNode(doc)
@@ -36,14 +36,22 @@ func Set(doc *yaml.Node, path string, value *yaml.Node) error {
 			*node = *value
 		} else if node.Kind == yaml.MappingNode && value.Kind == yaml.MappingNode {
 			// Append new values onto an existing map node.
-			node.Content = append(value.Content, node.Content...)
+			if overwrite {
+				*node = *value
+			} else {
+				node.Content = append(value.Content, node.Content...)
+			}
 		} else if node.Kind == yaml.MappingNode && node.Content == nil {
 			// Overwrite a new map node we created in findNode(), as confirmed
 			// by the nil check (the node.Content wouldn't be nil otherwise).
 			*node = *value
 		} else if node.Kind == yaml.SequenceNode && value.Kind == yaml.SequenceNode {
 			// Append new values onto an existing array node.
-			node.Content = append(value.Content, node.Content...)
+			if overwrite {
+				*node = *value
+			} else {
+				node.Content = append(value.Content, node.Content...)
+			}
 		} else {
 			return errors.Errorf("can't overwrite %v value (line: %v, column: %v) with %v value", node.Tag, node.Line, node.Column, value.Tag)
 		}
@@ -55,7 +63,7 @@ func Set(doc *yaml.Node, path string, value *yaml.Node) error {
 	return nil
 }
 
-func SetDefault(doc *yaml.Node, path string, value *yaml.Node) error {
+func SetDefault(doc *yaml.Node, path string, value *yaml.Node, overwrite bool) error {
 	selectors := strings.Split(path, ".")
 
 	root := getRootNode(doc)
@@ -64,5 +72,5 @@ func SetDefault(doc *yaml.Node, path string, value *yaml.Node) error {
 		return nil
 	}
 
-	return Set(doc, path, value)
+	return Set(doc, path, value, overwrite)
 }

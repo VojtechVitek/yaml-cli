@@ -26,6 +26,7 @@ var (
 	printKey      = flags.Bool("print-key", false, "yaml get: print node key in front of the value, so the output is valid YAML")
 	noSeparator   = flags.Bool("no-separator", false, "yaml get: don't print `---' separator between YAML documents")
 	invert        = flags.BoolP("invert-match", "v", false, "yaml grep -v: select non-matching documents")
+	overwrite     = flags.Bool("overwrite", false, "yaml set: overwrite/append node")
 )
 
 // TODO: Split into multiple files/functions. This function grew too much
@@ -137,7 +138,7 @@ func run(out io.Writer, in io.Reader, args []string) error {
 					return errors.Wrapf(err, "failed to read transformation %v", filename)
 				}
 
-				fileTfs[i], err = yaml.Transformations(f)
+				fileTfs[i], err = yaml.Transformations(f, *overwrite)
 				if err != nil {
 					return errors.Wrapf(err, "failed to parse transformation %v", filename)
 				}
@@ -219,7 +220,7 @@ func run(out io.Writer, in io.Reader, args []string) error {
 		case "grep":
 			selectors := args[1:]
 
-			tfs, err := yaml.Transformations(strings.NewReader(fmt.Sprintf("match:\n  %v", strings.Join(selectors, "\n  "))))
+			tfs, err := yaml.Transformations(strings.NewReader(fmt.Sprintf("match:\n  %v", strings.Join(selectors, "\n  "))), *overwrite)
 			if err != nil {
 				return errors.Wrapf(err, "failed to parse grep `key: value' pairs from %q", selectors)
 			}
@@ -301,7 +302,7 @@ func run(out io.Writer, in io.Reader, args []string) error {
 		case "set":
 			keyValues := args[1:]
 
-			tfs, err := yaml.Transformations(strings.NewReader(fmt.Sprintf("set:\n  %v", strings.Join(keyValues, "\n  "))))
+			tfs, err := yaml.Transformations(strings.NewReader(fmt.Sprintf("set:\n  %v", strings.Join(keyValues, "\n  "))), *overwrite)
 			if err != nil {
 				return errors.Wrapf(err, "failed to parse `key: value' pairs from %v", keyValues)
 			}
@@ -318,7 +319,7 @@ func run(out io.Writer, in io.Reader, args []string) error {
 		case "default":
 			keyValues := args[1:]
 
-			tfs, err := yaml.Transformations(strings.NewReader(fmt.Sprintf("default:\n  %v", strings.Join(keyValues, "\n  "))))
+			tfs, err := yaml.Transformations(strings.NewReader(fmt.Sprintf("default:\n  %v", strings.Join(keyValues, "\n  "))), *overwrite)
 			if err != nil {
 				return errors.Wrapf(err, "failed to parse `key: value' pairs from %v", keyValues)
 			}
