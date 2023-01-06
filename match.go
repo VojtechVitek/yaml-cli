@@ -33,7 +33,7 @@ func (t *Transformation) MustMatchAll(doc *yaml.Node) (bool, error) {
 			return false, errors.Errorf("%q is not a valid regex, see https://github.com/google/re2/wiki/Syntax", regexString)
 		}
 
-		selectors := strings.Split(path, ".")
+		selectors := parseSelectors(path)
 		gotNodes, err := findNodes(root, selectors, false)
 		if err != nil {
 			return false, errors.Wrapf(err, "failed to match %q", path)

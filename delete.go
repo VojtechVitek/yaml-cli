@@ -8,7 +8,7 @@ import (
 )
 
 func Delete(doc *yaml.Node, path string) error {
-	selectors := strings.Split(path, ".")
+	selectors := parseSelectors(path)
 
 	err := deleteMatchingNode(getRootNode(doc), selectors)
 	if err != nil {

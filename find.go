@@ -8,6 +8,25 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+func parseSelectors(path string) []string {
+
+	var selectors []string
+
+	pathLen := len(path)
+	from := 0
+	for i := 0; i < pathLen; i++ {
+		c := path[i]
+		if c == '.' && i > 0 && path[i-1] != '\\' {
+			selectors = append(selectors, strings.Replace(path[from:i], "\\", "", -1))
+			from = i + 1
+		}
+	}
+
+	selectors = append(selectors, strings.Replace(path[from:], "\\", "", -1))
+
+	return selectors
+}
+
 func getRootNode(doc *yaml.Node) *yaml.Node {
 	var root *yaml.Node
 	if doc.Content == nil {

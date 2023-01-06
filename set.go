@@ -1,8 +1,6 @@
 package yaml
 
 import (
-	"strings"
-
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 )
@@ -22,7 +20,7 @@ func literalNodes(node *yaml.Node) {
 }
 
 func Set(doc *yaml.Node, path string, value *yaml.Node, overwrite bool) error {
-	selectors := strings.Split(path, ".")
+	selectors := parseSelectors(path)
 
 	root := getRootNode(doc)
 	nodes, err := findNodes(root, selectors, true)
@@ -39,7 +37,7 @@ func Set(doc *yaml.Node, path string, value *yaml.Node, overwrite bool) error {
 			if overwrite {
 				*node = *value
 			} else {
-				node.Content = append(value.Content, node.Content...)
+				node.Content = append(node.Content, value.Content...)
 			}
 		} else if node.Kind == yaml.MappingNode && node.Content == nil {
 			// Overwrite a new map node we created in findNode(), as confirmed
@@ -64,7 +62,7 @@ func Set(doc *yaml.Node, path string, value *yaml.Node, overwrite bool) error {
 }
 
 func SetDefault(doc *yaml.Node, path string, value *yaml.Node, overwrite bool) error {
-	selectors := strings.Split(path, ".")
+	selectors := parseSelectors(path)
 
 	root := getRootNode(doc)
 	_, err := findNodes(root, selectors, false)
