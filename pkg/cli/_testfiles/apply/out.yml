@@ -21,34 +21,34 @@ spec:
         app: embedder
     spec:
       containers:
-      - args:
-        - -config=/etc/embedder.toml
-        command:
-        - embedder
-        image: example.com/embedder:v19.7.1
-        livenessProbe:
-          httpGet:
-            path: /ping
-            port: 6363
-            scheme: HTTP
-          initialDelaySeconds: 1
-        name: embedder
-        ports:
-        - containerPort: 6363
-          name: http
-        resources:
-          limits:
-            cpu: 0.2
-            memory: 100Mi
-          requests:
-            cpu: 0.1
-            memory: 50Mi
-        env:
-        - name: FOO
-          value: BAR
-        - name: ENV
-          value: staging
-        imagePullPolicy: IfNotPresent
+        - args:
+            - -config=/etc/embedder.toml
+          command:
+            - embedder
+          image: example.com/embedder:v19.7.1
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 6363
+              scheme: HTTP
+            initialDelaySeconds: 1
+          name: embedder
+          ports:
+            - containerPort: 6363
+              name: http
+          resources:
+            limits:
+              cpu: 0.2
+              memory: 100Mi
+            requests:
+              cpu: 0.1
+              memory: 50Mi
+          env:
+            - name: FOO
+              value: BAR
+            - name: ENV
+              value: staging
+          imagePullPolicy: IfNotPresent
       nodeSelector:
         worker-role: generic
 ---
@@ -64,9 +64,9 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 80
-    name: http
-    protocol: TCP
-    targetPort: 6363
+    - port: 80
+      name: http
+      protocol: TCP
+      targetPort: 6363
   selector:
     app: embedder

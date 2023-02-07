@@ -9,7 +9,7 @@ func TestDefault(t *testing.T) {
 		{
 			in:   "",
 			args: []string{"default", ""},
-			out:  ``,
+			out:  "{}\n",
 		},
 		{
 			in:   "first: value",

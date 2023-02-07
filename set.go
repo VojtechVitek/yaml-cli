@@ -19,7 +19,7 @@ func literalNodes(node *yaml.Node) {
 	}
 }
 
-func Set(doc *yaml.Node, path string, value *yaml.Node, overwrite bool) error {
+func Set(doc *yaml.Node, path string, value *yaml.Node, overwrite bool, literalStyle bool) error {
 	selectors := parseSelectors(path)
 
 	root := getRootNode(doc)
@@ -48,20 +48,21 @@ func Set(doc *yaml.Node, path string, value *yaml.Node, overwrite bool) error {
 			if overwrite {
 				*node = *value
 			} else {
-				node.Content = append(value.Content, node.Content...)
+				node.Content = append(node.Content, value.Content...)
 			}
 		} else {
 			return errors.Errorf("can't overwrite %v value (line: %v, column: %v) with %v value", node.Tag, node.Line, node.Column, value.Tag)
 		}
 
-		// always literal style
-		literalNodes(node)
+		if literalStyle {
+			literalNodes(node)
+		}
 	}
 
 	return nil
 }
 
-func SetDefault(doc *yaml.Node, path string, value *yaml.Node, overwrite bool) error {
+func SetDefault(doc *yaml.Node, path string, value *yaml.Node, overwrite bool, literalStyle bool) error {
 	selectors := parseSelectors(path)
 
 	root := getRootNode(doc)
@@ -70,5 +71,5 @@ func SetDefault(doc *yaml.Node, path string, value *yaml.Node, overwrite bool) e
 		return nil
 	}
 
-	return Set(doc, path, value, overwrite)
+	return Set(doc, path, value, overwrite, literalStyle)
 }
