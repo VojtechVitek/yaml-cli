@@ -26,6 +26,8 @@ var (
 	printKey      = flags.Bool("print-key", false, "yaml get: print node key in front of the value, so the output is valid YAML")
 	noSeparator   = flags.Bool("no-separator", false, "yaml get: don't print `---' separator between YAML documents")
 	invert        = flags.BoolP("invert-match", "v", false, "yaml grep -v: select non-matching documents")
+	overwrite     = flags.Bool("overwrite", false, "yaml set: overwrite/append node")
+	literalStyle  = flags.Bool("literalStyle", false, "yaml set: literalStyle nodes")
 )
 
 // TODO: Split into multiple files/functions. This function grew too much
@@ -137,7 +139,7 @@ func run(out io.Writer, in io.Reader, args []string) error {
 					return errors.Wrapf(err, "failed to read transformation %v", filename)
 				}
 
-				fileTfs[i], err = yaml.Transformations(f)
+				fileTfs[i], err = yaml.Transformations(f, *overwrite, *literalStyle)
 				if err != nil {
 					return errors.Wrapf(err, "failed to parse transformation %v", filename)
 				}
@@ -186,14 +188,23 @@ func run(out io.Writer, in io.Reader, args []string) error {
 	}
 
 	dec := yamlv3.NewDecoder(in)
+	firstIn := true
 	for { // For all YAML documents in STDIN.
 		var doc yamlv3.Node
 		if err := dec.Decode(&doc); err != nil {
 			if err == io.EOF { // Last document.
-				return nil
+				if !firstIn {
+					return nil
+				} else {
+					doc.Kind = yamlv3.MappingNode
+					doc.Style = yamlv3.LiteralStyle
+				}
+			} else {
+				return errors.Wrap(err, "failed to decode YAML document(s) from stdin")
 			}
-			return errors.Wrap(err, "failed to decode YAML document(s) from stdin")
 		}
+
+		firstIn = false
 
 		switch args[0] {
 		case "apply":
@@ -210,7 +221,7 @@ func run(out io.Writer, in io.Reader, args []string) error {
 		case "grep":
 			selectors := args[1:]
 
-			tfs, err := yaml.Transformations(strings.NewReader(fmt.Sprintf("match:\n  %v", strings.Join(selectors, "\n  "))))
+			tfs, err := yaml.Transformations(strings.NewReader(fmt.Sprintf("match:\n  %v", strings.Join(selectors, "\n  "))), *overwrite, *literalStyle)
 			if err != nil {
 				return errors.Wrapf(err, "failed to parse grep `key: value' pairs from %q", selectors)
 			}
@@ -292,7 +303,7 @@ func run(out io.Writer, in io.Reader, args []string) error {
 		case "set":
 			keyValues := args[1:]
 
-			tfs, err := yaml.Transformations(strings.NewReader(fmt.Sprintf("set:\n  %v", strings.Join(keyValues, "\n  "))))
+			tfs, err := yaml.Transformations(strings.NewReader(fmt.Sprintf("set:\n  %v", strings.Join(keyValues, "\n  "))), *overwrite, *literalStyle)
 			if err != nil {
 				return errors.Wrapf(err, "failed to parse `key: value' pairs from %v", keyValues)
 			}
@@ -309,7 +320,7 @@ func run(out io.Writer, in io.Reader, args []string) error {
 		case "default":
 			keyValues := args[1:]
 
-			tfs, err := yaml.Transformations(strings.NewReader(fmt.Sprintf("default:\n  %v", strings.Join(keyValues, "\n  "))))
+			tfs, err := yaml.Transformations(strings.NewReader(fmt.Sprintf("default:\n  %v", strings.Join(keyValues, "\n  "))), *overwrite, *literalStyle)
 			if err != nil {
 				return errors.Wrapf(err, "failed to parse `key: value' pairs from %v", keyValues)
 			}

@@ -9,13 +9,15 @@ import (
 )
 
 type Transformation struct {
-	Matches  map[string]yaml.Node `yaml:"match"`
-	Sets     yaml.Node            `yaml:"set"`
-	Defaults yaml.Node            `yaml:"default"`
-	Deletes  []string             `yaml:"delete"`
+	Matches      map[string]yaml.Node `yaml:"match"`
+	Sets         yaml.Node            `yaml:"set"`
+	Defaults     yaml.Node            `yaml:"default"`
+	Deletes      []string             `yaml:"delete"`
+	Overwrite    bool                 `yaml:"overwrite"`
+	LiteralStyle bool                 `yaml:"literalStyle"`
 }
 
-func Transformations(r io.Reader) ([]*Transformation, error) {
+func Transformations(r io.Reader, overwrite bool, literal bool) ([]*Transformation, error) {
 	var transformations []*Transformation
 
 	dec := yaml.NewDecoder(r)
@@ -27,7 +29,8 @@ func Transformations(r io.Reader) ([]*Transformation, error) {
 			}
 			return nil, errors.Wrapf(err, "failed to decode YAML")
 		}
-
+		t.Overwrite = overwrite
+		t.LiteralStyle = literal
 		transformations = append(transformations, &t)
 	}
 
@@ -68,7 +71,7 @@ func (t *Transformation) ApplySet(doc *yaml.Node) error {
 	for i := 0; i < len(t.Sets.Content); i += 2 {
 		path, value := t.Sets.Content[i].Value, t.Sets.Content[i+1]
 
-		if err := Set(doc, path, value); err != nil {
+		if err := Set(doc, path, value, t.Overwrite, t.LiteralStyle); err != nil {
 			return errors.Wrapf(err, "failed to set %q", path)
 		}
 	}
@@ -80,7 +83,7 @@ func (t *Transformation) ApplyDefault(doc *yaml.Node) error {
 	for i := 0; i < len(t.Defaults.Content); i += 2 {
 		path, value := t.Defaults.Content[i].Value, t.Defaults.Content[i+1]
 
-		if err := SetDefault(doc, path, value); err != nil {
+		if err := SetDefault(doc, path, value, t.Overwrite, t.LiteralStyle); err != nil {
 			log.Printf("going to set default %v=%v", path, value)
 			return errors.Wrapf(err, "failed to set default %q", path)
 		}

@@ -5,5 +5,5 @@ import (
 )
 
 func Get(doc *yaml.Node, selectors []string) ([]*yaml.Node, error) {
-	return findNodes(doc.Content[0], selectors, false)
+	return findNodes(getRootNode(doc), selectors, false)
 }

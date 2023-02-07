@@ -9,7 +9,12 @@ func TestSet(t *testing.T) {
 		{
 			in:   "",
 			args: []string{"set", ""},
-			out:  "",
+			out:  "{}\n",
+		},
+		{
+			in:   "",
+			args: []string{"set", "first: value"},
+			out:  "first: value\n",
 		},
 		{
 			in:   "first: value",
@@ -38,6 +43,11 @@ third: value
 			in:   "first: object\n---\nsecond: object\n",
 			args: []string{"set", "foo: bar"},
 			out:  "first: object\nfoo: bar\n---\nsecond: object\nfoo: bar\n",
+		},
+		{
+			in:   "first: object\n---\nsecond.foo: object\n",
+			args: []string{"set", "second\\.foo: bar"},
+			out:  "first: object\nsecond.foo: bar\n---\nsecond.foo: bar\n",
 		},
 	}
 
